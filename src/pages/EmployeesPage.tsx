@@ -1,5 +1,5 @@
 import { isAxiosError } from 'axios'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useEmployees } from '../features/employees/hooks/useEmployees'
 import { useDebouncedValue } from '../features/employees/hooks/useDebouncedValue'
 
@@ -33,25 +33,19 @@ export default function EmployeesPage() {
     isActive,
   )
 
-  useEffect(() => {
-    setPage(1)
-  }, [search, statusFilter])
-
   const sessionExpired = isAxiosError(error) && error.response?.status === 401
   const canGoPrevious = page > 1 && !isFetching
   const canGoNext = !!data && !isError && !isFetching && !isPlaceholderData && page < data.totalPages
 
   // Si el total cambia en el servidor, vuelve a una página que todavía exista.
-  useEffect(() => {
-    if (
-      data &&
-      !isPlaceholderData &&
-      !isError &&
-      page > Math.max(1, data.totalPages)
-    ) {
-      setPage(Math.max(1, data.totalPages))
-    }
-  }, [data, isPlaceholderData, isError, page])
+  if (
+    data &&
+    !isPlaceholderData &&
+    !isError &&
+    page > Math.max(1, data.totalPages)
+  ) {
+    setPage(Math.max(1, data.totalPages))
+  }
 
   return (
     <section aria-labelledby="employees-title" className="space-y-6">
@@ -72,7 +66,10 @@ export default function EmployeesPage() {
             id="employee-search"
             type="search"
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) => {
+              setSearch(event.target.value)
+              setPage(1)
+            }}
             placeholder="Nombre o número de nómina..."
             className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 sm:max-w-md"
           />
@@ -80,7 +77,10 @@ export default function EmployeesPage() {
           {search && (
             <button
               type="button"
-              onClick={() => setSearch('')}
+              onClick={() => {
+                setSearch('')
+                setPage(1)
+              }}
               className="min-h-11 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
             >
               Limpiar
@@ -100,11 +100,12 @@ export default function EmployeesPage() {
         <select
           id="employee-status"
           value={statusFilter}
-          onChange={(event) =>
+          onChange={(event) => {
             setStatusFilter(
               event.target.value as 'all' | 'active' | 'inactive',
             )
-          }
+            setPage(1)
+          }}
           className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 sm:max-w-xs"
         >
           <option value="all">Todos</option>
