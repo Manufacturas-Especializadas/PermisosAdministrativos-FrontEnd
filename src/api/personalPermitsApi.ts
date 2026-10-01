@@ -27,3 +27,20 @@ export async function getPendingPersonalPermits(
 
     return response.data
 }
+
+export async function approvePersonalPermit(
+    permitId: number,
+): Promise<void> {
+    await api.post(`/api/personal-permits/${permitId}/approve`)
+}
+
+export interface RejectPersonalPermitRequest {
+    reason: string
+}
+
+export async function rejectPersonalPermit(
+    permitId: number,
+    request: RejectPersonalPermitRequest,
+): Promise<void> {
+    await api.post(`/api/personal-permits/${permitId}/reject`, request)
+}
