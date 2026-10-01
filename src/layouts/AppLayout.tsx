@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
-import { useNavigate } from 'react-router'
+import { NavLink, useNavigate } from 'react-router'
 import { useAuth } from '../auth/AuthContext'
+import { hasAllowedRole, protectedFeatures } from '../auth/roleAccess'
 
 interface AppLayoutProps {
   children: ReactNode
@@ -11,6 +12,12 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const navigate = useNavigate()
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [error, setError] = useState('')
+  const navigationItems = [
+    { path: '/', label: 'Inicio' },
+    ...protectedFeatures.filter((feature) =>
+      hasAllowedRole(user?.roles ?? [], feature.allowedRoles),
+    ),
+  ]
 
   async function handleLogout() {
     if (isLoggingOut) return
@@ -56,6 +63,27 @@ export default function AppLayout({ children }: AppLayoutProps) {
             </button>
           </div>
         </div>
+        <nav className="border-t border-slate-100" aria-label="Navegación principal">
+          <ul className="mx-auto flex max-w-6xl flex-wrap gap-2 px-4 py-3 sm:px-6 lg:px-8">
+            {navigationItems.map((item) => (
+              <li key={item.path}>
+                <NavLink
+                  to={item.path}
+                  end
+                  className={({ isActive }) =>
+                    `inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 ${
+                      isActive
+                        ? 'bg-blue-50 text-blue-800'
+                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950'
+                    }`
+                  }
+                >
+                  {item.label}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+        </nav>
       </header>
       <main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
         {error && (

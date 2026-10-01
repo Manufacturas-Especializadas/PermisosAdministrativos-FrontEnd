@@ -1,12 +1,7 @@
-import { Link } from 'react-router'
 import { useAuth } from '../auth/AuthContext'
-import { hasAllowedRole, protectedAreas } from '../auth/roleAccess'
 
 export default function HomePage() {
   const { user } = useAuth()
-  const accessibleAreas = protectedAreas.filter((area) =>
-    hasAllowedRole(user?.roles ?? [], area.allowedRoles),
-  )
 
   return (
     <div className="space-y-8">
@@ -38,22 +33,6 @@ export default function HomePage() {
       <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8" aria-labelledby="panel-title">
         <h2 id="panel-title" className="text-lg font-semibold text-slate-950">Panel principal</h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">Próximamente encontrarás aquí las opciones del sistema.</p>
-        {accessibleAreas.length > 0 && (
-          <nav className="mt-5" aria-label="Áreas disponibles">
-            <ul className="flex flex-wrap gap-3">
-              {accessibleAreas.map((area) => (
-                <li key={area.path}>
-                  <Link
-                    className="inline-flex min-h-11 items-center rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-blue-700 transition-colors hover:border-blue-700 hover:bg-blue-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
-                    to={area.path}
-                  >
-                    {area.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        )}
       </section>
     </div>
   )

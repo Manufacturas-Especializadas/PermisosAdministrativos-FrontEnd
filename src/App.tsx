@@ -1,8 +1,9 @@
 import { BrowserRouter, Outlet, Route, Routes } from 'react-router'
-import { protectedAreas } from './auth/roleAccess'
+import { protectedFeatures } from './auth/roleAccess'
 import ProtectedRoute from './components/ProtectedRoute'
 import RoleRoute from './components/RoleRoute'
 import AppLayout from './layouts/AppLayout'
+import EmployeesPage from './pages/EmployeesPage'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
 
@@ -21,15 +22,19 @@ function App() {
           }
         >
           <Route path="/" element={<HomePage />} />
-          {protectedAreas.map((area) => (
+          {protectedFeatures.map((feature) => (
             <Route
-              key={area.path}
-              path={area.path}
+              key={feature.path}
+              path={feature.path}
               element={
-                <RoleRoute allowedRoles={area.allowedRoles}>
-                  <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
-                    {area.title}
-                  </h1>
+                <RoleRoute allowedRoles={feature.allowedRoles}>
+                  {feature.path === '/employees' ? (
+                    <EmployeesPage />
+                  ) : (
+                    <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
+                      {feature.label}
+                    </h1>
+                  )}
                 </RoleRoute>
               }
             />
