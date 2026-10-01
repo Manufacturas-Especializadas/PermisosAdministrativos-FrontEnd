@@ -3,6 +3,7 @@ import { protectedFeatures } from './auth/roleAccess'
 import ProtectedRoute from './components/ProtectedRoute'
 import RoleRoute from './components/RoleRoute'
 import AppLayout from './layouts/AppLayout'
+import ApprovedPermitsPage from './pages/ApprovedPermitsPage'
 import EmployeesPage from './pages/EmployeesPage'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
@@ -36,6 +37,8 @@ function App() {
                     <PersonalPermitPage />
                   ) : feature.path === '/permits/pending' ? (
                     <PendingPermitsPage />
+                  ) : feature.path === '/permits/approved' ? (
+                    <ApprovedPermitsPage />
                   ) : (
                     <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
                       {feature.label}

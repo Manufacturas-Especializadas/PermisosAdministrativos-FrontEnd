@@ -1,5 +1,5 @@
 import api from './http'
-import type { PersonalPermitType, PendingPersonalPermit } from '../features/personalPermits/personalPermit.types'
+import type { ApprovedPersonalPermit, PersonalPermitType, PendingPersonalPermit } from '../features/personalPermits/personalPermit.types'
 
 export interface CreatePersonalPermitRequest {
     employeeId: number
@@ -43,4 +43,23 @@ export async function rejectPersonalPermit(
     request: RejectPersonalPermitRequest,
 ): Promise<void> {
     await api.post(`/api/personal-permits/${permitId}/reject`, request)
+}
+
+export async function getApprovedPersonalPermits(
+    signal?: AbortSignal,
+): Promise<ApprovedPersonalPermit[]> {
+    const response = await api.get<ApprovedPersonalPermit[]>(
+        '/api/personal-permits/approved',
+        {
+            signal,
+        },
+    )
+
+    return response.data
+}
+
+export async function completePersonalPermit(
+    permitId: number,
+): Promise<void> {
+    await api.post(`/api/personal-permits/${permitId}/complete`)
 }

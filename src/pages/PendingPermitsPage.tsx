@@ -4,20 +4,8 @@ import { useApprovePersonalPermit } from '../features/personalPermits/hooks/useA
 import { usePendingPersonalPermits } from '../features/personalPermits/hooks/usePendingPersonalPermits'
 import { useRejectPersonalPermit } from '../features/personalPermits/hooks/useRejectPersonalPermit'
 import { getPersonalPermitReviewError } from '../features/personalPermits/personalPermit.errors'
-import type { PendingPersonalPermit, PersonalPermitType } from '../features/personalPermits/personalPermit.types'
-
-const permitTypeLabels: Record<PersonalPermitType, string> = {
-  1: 'Salir',
-  2: 'Personal',
-  3: 'Comer',
-  4: 'IMSS',
-  5: 'Banco',
-}
-
-function formatPermitDate(permitDate: string): string {
-  const [year, month, day] = permitDate.split('-')
-  return `${day}/${month}/${year}`
-}
+import { formatPermitDate, permitTypeLabels } from '../features/personalPermits/personalPermit.format'
+import type { PendingPersonalPermit } from '../features/personalPermits/personalPermit.types'
 
 export default function PendingPermitsPage() {
   const { data, isPending, isFetching, isError, error } = usePendingPersonalPermits()

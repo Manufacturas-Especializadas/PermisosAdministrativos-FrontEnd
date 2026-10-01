@@ -18,3 +18,14 @@ export interface PendingPersonalPermit {
     permitType: PersonalPermitType
     reason: string
 }
+
+export interface ApprovedPersonalPermit {
+    id: number
+    employeeId: number
+    payrollNumber: string
+    employeeName: string
+    permitDate: string
+    exitTime: string
+    permitType: PersonalPermitType
+    reason: string
+}
