@@ -9,5 +9,7 @@ export function usePendingPersonalPermits() {
         queryKey: ['personal-permits', 'pending', user?.userId],
         queryFn: ({ signal }) => getPendingPersonalPermits(signal),
         enabled: user !== null,
+        refetchInterval: 30_000,
+        refetchIntervalInBackground: false,
     })
 }

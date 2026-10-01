@@ -14,6 +14,8 @@ import {
 
 import type { AuthUser } from './auth.types'
 import type { LoginRequest } from './authApi'
+import { registerUnauthorizedHandler } from '../api/http'
+import { queryClient } from '../api/queryClient'
 
 interface AuthContextValue {
     user: AuthUser | null
@@ -34,18 +36,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
+        let active = true
+        const unregisterUnauthorizedHandler = registerUnauthorizedHandler(() => {
+            if (!active) return
+            setUser(null)
+            queryClient.clear()
+        })
+
         const loadCurrentUser = async () => {
             try {
                 const currentUser = await getCurrentUser()
-                setUser(currentUser)
+                if (active) setUser(currentUser)
             } catch {
-                setUser(null)
+                if (active) setUser(null)
             } finally {
-                setIsLoading(false)
+                if (active) setIsLoading(false)
             }
         }
 
         loadCurrentUser()
+
+        return () => {
+            active = false
+            unregisterUnauthorizedHandler()
+        }
     }, [])
 
     const login = async (request: LoginRequest) => {
@@ -59,6 +73,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const logout = async () => {
         await logoutRequest()
         setUser(null)
+        queryClient.clear()
     }
 
     return (

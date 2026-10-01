@@ -9,5 +9,7 @@ export function useApprovedPersonalPermits() {
         queryKey: ['personal-permits', 'approved', user?.userId],
         queryFn: ({ signal }) => getApprovedPersonalPermits(signal),
         enabled: user !== null,
+        refetchInterval: 30_000,
+        refetchIntervalInBackground: false,
     })
 }

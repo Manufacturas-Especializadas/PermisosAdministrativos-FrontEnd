@@ -13,6 +13,10 @@ export function useApprovePersonalPermit() {
                 exact: true,
             }),
             queryClient.invalidateQueries({
+                queryKey: ['personal-permits', 'approved', user?.userId],
+                exact: true,
+            }),
+            queryClient.invalidateQueries({
                 queryKey: ['personal-permits', 'history', user?.userId],
             }),
         ])

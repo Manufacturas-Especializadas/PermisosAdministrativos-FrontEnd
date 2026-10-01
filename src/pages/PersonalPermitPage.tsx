@@ -26,6 +26,7 @@ export default function PersonalPermitPage() {
 
     const handleSubmit = async () => {
         if (
+            createPermit.isPending ||
             !selectedEmployee ||
             !permitDate ||
             !exitTime ||
@@ -77,145 +78,149 @@ export default function PersonalPermitPage() {
                     event.preventDefault()
                     void handleSubmit()
                 }}
-                className="space-y-5 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+                aria-busy={createPermit.isPending}
+                className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
             >
-                <EmployeeSelector
-                    selectedEmployee={selectedEmployee}
-                    onSelect={setSelectedEmployee}
-                    onClear={() => setSelectedEmployee(null)}
-                />
-
-                <div className="grid gap-5 sm:grid-cols-2">
-                    <div className="space-y-2">
-                        <label
-                            htmlFor="permit-date"
-                            className="block text-sm font-medium text-slate-700"
-                        >
-                            Fecha
-                        </label>
-
-                        <input
-                            id="permit-date"
-                            type="date"
-                            required
-                            value={permitDate}
-                            onChange={(event) =>
-                                setPermitDate(event.target.value)
-                            }
-                            className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <label
-                            htmlFor="exit-time"
-                            className="block text-sm font-medium text-slate-700"
-                        >
-                            Hora de salida
-                        </label>
-
-                        <input
-                            id="exit-time"
-                            type="time"
-                            required
-                            value={exitTime}
-                            onChange={(event) =>
-                                setExitTime(event.target.value)
-                            }
-                            className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                        />
-                    </div>
-                </div>
-
-                <div className="space-y-2">
-                    <label
-                        htmlFor="permit-type"
-                        className="block text-sm font-medium text-slate-700"
-                    >
-                        Tipo de permiso
-                    </label>
-
-                    <select
-                        id="permit-type"
-                        required
-                        value={permitType ?? ''}
-                        onChange={(event) => {
-                            const value = event.target.value
-
-                            setPermitType(
-                                value === ''
-                                    ? null
-                                    : (Number(value) as PersonalPermitType),
-                            )
-                        }}
-                        className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                    >
-                        <option value="">Selecciona un tipo</option>
-
-                        {Object.entries(permitTypeLabels).map(([value, label]) => (
-                            <option key={value} value={value}>
-                                {label}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                <div className="space-y-2">
-                    <label
-                        htmlFor="permit-reason"
-                        className="block text-sm font-medium text-slate-700"
-                    >
-                        Motivo
-                    </label>
-
-                    <textarea
-                        id="permit-reason"
-                        required
-                        value={reason}
-                        onChange={(event) => setReason(event.target.value)}
-                        rows={4}
-                        placeholder="Describe brevemente el motivo..."
-                        className="w-full resize-y rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                <fieldset disabled={createPermit.isPending} className="min-w-0 space-y-5">
+                    <legend className="sr-only">Datos del permiso personal</legend>
+                    <EmployeeSelector
+                        selectedEmployee={selectedEmployee}
+                        onSelect={setSelectedEmployee}
+                        onClear={() => setSelectedEmployee(null)}
                     />
-                </div>
 
-                {createPermit.isSuccess && (
-                    <p
-                        role="status"
-                        className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800"
-                    >
-                        El permiso se registró correctamente y quedó pendiente
-                        de aprobación por RH.
-                    </p>
-                )}
+                    <div className="grid gap-5 sm:grid-cols-2">
+                        <div className="space-y-2">
+                            <label
+                                htmlFor="permit-date"
+                                className="block text-sm font-medium text-slate-700"
+                            >
+                                Fecha
+                            </label>
 
-                {createPermit.isError && (
-                    <p
-                        role="alert"
-                        className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
-                    >
-                        {errorMessage}
-                    </p>
-                )}
+                            <input
+                                id="permit-date"
+                                type="date"
+                                required
+                                value={permitDate}
+                                onChange={(event) =>
+                                    setPermitDate(event.target.value)
+                                }
+                                className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                            />
+                        </div>
 
-                <div className="flex justify-end border-t border-slate-200 pt-5">
-                    <button
-                        type="submit"
-                        disabled={
-                            createPermit.isPending ||
-                            !selectedEmployee ||
-                            !permitDate ||
-                            !exitTime ||
-                            permitType === null ||
-                            !reason.trim()
-                        }
-                        className="min-h-11 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-                    >
-                        {createPermit.isPending
-                            ? 'Registrando...'
-                            : 'Registrar permiso'}
-                    </button>
-                </div>
+                        <div className="space-y-2">
+                            <label
+                                htmlFor="exit-time"
+                                className="block text-sm font-medium text-slate-700"
+                            >
+                                Hora de salida
+                            </label>
+
+                            <input
+                                id="exit-time"
+                                type="time"
+                                required
+                                value={exitTime}
+                                onChange={(event) =>
+                                    setExitTime(event.target.value)
+                                }
+                                className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label
+                            htmlFor="permit-type"
+                            className="block text-sm font-medium text-slate-700"
+                        >
+                            Tipo de permiso
+                        </label>
+
+                        <select
+                            id="permit-type"
+                            required
+                            value={permitType ?? ''}
+                            onChange={(event) => {
+                                const value = event.target.value
+
+                                setPermitType(
+                                    value === ''
+                                        ? null
+                                        : (Number(value) as PersonalPermitType),
+                                )
+                            }}
+                            className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                        >
+                            <option value="">Selecciona un tipo</option>
+
+                            {Object.entries(permitTypeLabels).map(([value, label]) => (
+                                <option key={value} value={value}>
+                                    {label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label
+                            htmlFor="permit-reason"
+                            className="block text-sm font-medium text-slate-700"
+                        >
+                            Motivo
+                        </label>
+
+                        <textarea
+                            id="permit-reason"
+                            required
+                            value={reason}
+                            onChange={(event) => setReason(event.target.value)}
+                            rows={4}
+                            placeholder="Describe brevemente el motivo..."
+                            className="w-full resize-y rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                        />
+                    </div>
+
+                    {createPermit.isSuccess && (
+                        <p
+                            role="status"
+                            className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800"
+                        >
+                            El permiso se registró correctamente y quedó pendiente
+                            de aprobación por RH.
+                        </p>
+                    )}
+
+                    {createPermit.isError && (
+                        <p
+                            role="alert"
+                            className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+                        >
+                            {errorMessage}
+                        </p>
+                    )}
+
+                    <div className="flex justify-end border-t border-slate-200 pt-5">
+                        <button
+                            type="submit"
+                            disabled={
+                                createPermit.isPending ||
+                                !selectedEmployee ||
+                                !permitDate ||
+                                !exitTime ||
+                                permitType === null ||
+                                !reason.trim()
+                            }
+                            className="min-h-11 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                        >
+                            {createPermit.isPending
+                                ? 'Registrando...'
+                                : 'Registrar permiso'}
+                        </button>
+                    </div>
+                </fieldset>
             </form>
         </section>
     )
