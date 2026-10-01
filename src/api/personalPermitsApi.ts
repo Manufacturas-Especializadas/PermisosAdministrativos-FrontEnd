@@ -1,5 +1,11 @@
 import api from './http'
-import type { ApprovedPersonalPermit, PersonalPermitType, PendingPersonalPermit } from '../features/personalPermits/personalPermit.types'
+import type {
+    ApprovedPersonalPermit,
+    PersonalPermitHistoryResult,
+    PersonalPermitStatus,
+    PersonalPermitType,
+    PendingPersonalPermit,
+} from '../features/personalPermits/personalPermit.types'
 
 export interface CreatePersonalPermitRequest {
     employeeId: number
@@ -62,4 +68,28 @@ export async function completePersonalPermit(
     permitId: number,
 ): Promise<void> {
     await api.post(`/api/personal-permits/${permitId}/complete`)
+}
+
+export interface GetPersonalPermitsParams {
+    employeeId?: number
+    status?: PersonalPermitStatus
+    fromDate?: string
+    toDate?: string
+    page?: number
+    pageSize?: number
+}
+
+export async function getPersonalPermits(
+    params: GetPersonalPermitsParams,
+    signal?: AbortSignal,
+): Promise<PersonalPermitHistoryResult> {
+    const response = await api.get<PersonalPermitHistoryResult>(
+        '/api/personal-permits',
+        {
+            params,
+            signal,
+        },
+    )
+
+    return response.data
 }

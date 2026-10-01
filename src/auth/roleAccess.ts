@@ -22,6 +22,11 @@ export const protectedFeatures: ProtectedFeature[] = [
     allowedRoles: ['Security', 'Administrator'],
   },
   {
+    path: '/permits/history',
+    label: 'Historial de permisos',
+    allowedRoles: ['HumanResources', 'Administrator'],
+  },
+  {
     path: '/employees',
     label: 'Empleados',
     allowedRoles: ['HumanResources', 'Administrator'],
