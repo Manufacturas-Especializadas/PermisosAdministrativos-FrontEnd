@@ -6,16 +6,23 @@ import { isPersonalPermitCompletionConflict } from '../personalPermit.errors'
 export function useCompletePersonalPermit() {
     const { user } = useAuth()
     const queryClient = useQueryClient()
-    const invalidateApproved = () => queryClient.invalidateQueries({
-        queryKey: ['personal-permits', 'approved', user?.userId],
-        exact: true,
-    })
+    const invalidatePermitQueries = async () => {
+        await Promise.all([
+            queryClient.invalidateQueries({
+                queryKey: ['personal-permits', 'approved', user?.userId],
+                exact: true,
+            }),
+            queryClient.invalidateQueries({
+                queryKey: ['personal-permits', 'history', user?.userId],
+            }),
+        ])
+    }
 
     return useMutation({
         mutationFn: completePersonalPermit,
-        onSuccess: invalidateApproved,
+        onSuccess: invalidatePermitQueries,
         onError: (error) => {
-            if (isPersonalPermitCompletionConflict(error)) return invalidateApproved()
+            if (isPersonalPermitCompletionConflict(error)) return invalidatePermitQueries()
         },
     })
 }

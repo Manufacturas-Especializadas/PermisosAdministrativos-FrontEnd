@@ -4,17 +4,7 @@ import type { Employee } from '../features/employees/employees.types'
 import { EmployeeSelector } from '../features/employees/components/EmployeeSelector'
 import type { PersonalPermitType } from '../features/personalPermits/personalPermit.types'
 import { useCreatePersonalPermit } from '../features/personalPermits/hooks/useCreatePersonalPermit'
-
-const permitTypes: Array<{
-    value: PersonalPermitType
-    label: string
-}> = [
-        { value: 1, label: 'Salir' },
-        { value: 2, label: 'Personal' },
-        { value: 3, label: 'Comer' },
-        { value: 4, label: 'IMSS' },
-        { value: 5, label: 'Banco' },
-    ]
+import { permitTypeLabels } from '../features/personalPermits/personalPermit.format'
 
 export default function PersonalPermitPage() {
     const [selectedEmployee, setSelectedEmployee] =
@@ -162,9 +152,9 @@ export default function PersonalPermitPage() {
                     >
                         <option value="">Selecciona un tipo</option>
 
-                        {permitTypes.map((type) => (
-                            <option key={type.value} value={type.value}>
-                                {type.label}
+                        {Object.entries(permitTypeLabels).map(([value, label]) => (
+                            <option key={value} value={value}>
+                                {label}
                             </option>
                         ))}
                     </select>

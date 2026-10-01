@@ -6,19 +6,26 @@ import { isPersonalPermitConflict } from '../personalPermit.errors'
 export function useRejectPersonalPermit() {
     const { user } = useAuth()
     const queryClient = useQueryClient()
-    const invalidatePending = () => queryClient.invalidateQueries({
-        queryKey: ['personal-permits', 'pending', user?.userId],
-        exact: true,
-    })
+    const invalidatePermitQueries = async () => {
+        await Promise.all([
+            queryClient.invalidateQueries({
+                queryKey: ['personal-permits', 'pending', user?.userId],
+                exact: true,
+            }),
+            queryClient.invalidateQueries({
+                queryKey: ['personal-permits', 'history', user?.userId],
+            }),
+        ])
+    }
 
     return useMutation({
         mutationFn: ({ permitId, request }: {
             permitId: number
             request: RejectPersonalPermitRequest
         }) => rejectPersonalPermit(permitId, request),
-        onSuccess: invalidatePending,
+        onSuccess: invalidatePermitQueries,
         onError: (error) => {
-            if (isPersonalPermitConflict(error)) return invalidatePending()
+            if (isPersonalPermitConflict(error)) return invalidatePermitQueries()
         },
     })
 }
