@@ -1,9 +1,42 @@
+import { BrowserRouter, Outlet, Route, Routes } from 'react-router'
+import { protectedAreas } from './auth/roleAccess'
+import ProtectedRoute from './components/ProtectedRoute'
+import RoleRoute from './components/RoleRoute'
+import AppLayout from './layouts/AppLayout'
+import HomePage from './pages/HomePage'
+import LoginPage from './pages/LoginPage'
+
 function App() {
   return (
-    <main>
-      <h1>Permisos Administrativos</h1>
-      <p>Sistema de gestión de permisos personales.</p>
-    </main>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <Outlet />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        >
+          <Route path="/" element={<HomePage />} />
+          {protectedAreas.map((area) => (
+            <Route
+              key={area.path}
+              path={area.path}
+              element={
+                <RoleRoute allowedRoles={area.allowedRoles}>
+                  <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
+                    {area.title}
+                  </h1>
+                </RoleRoute>
+              }
+            />
+          ))}
+        </Route>
+      </Routes>
+    </BrowserRouter>
   )
 }
 

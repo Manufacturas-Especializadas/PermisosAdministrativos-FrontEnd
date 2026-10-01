@@ -76,6 +76,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- Se conserva el hook junto al proveedor; este módulo puede requerir una recarga completa en desarrollo.
 export function useAuth() {
     const context = useContext(AuthContext)
 
