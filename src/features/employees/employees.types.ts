@@ -7,6 +7,13 @@ export interface Employee {
   isActive: boolean
 }
 
+export interface EmployeeImportResult {
+  processed: number
+  created: number
+  ignored: number
+  errors: string[]
+}
+
 export interface EmployeesResponse {
   items: Employee[]
   page: number

@@ -1,5 +1,16 @@
 import api from './http'
-import type { EmployeesResponse } from '../features/employees/employees.types'
+import type { EmployeeImportResult, EmployeesResponse } from '../features/employees/employees.types'
+
+export async function importEmployees(file: File): Promise<EmployeeImportResult> {
+  const formData = new FormData()
+  formData.append('File', file)
+
+  const response = await api.post<EmployeeImportResult>('/api/employees/import', formData, {
+    // Retira el valor JSON heredado; Axios/browser genera el multipart boundary.
+    headers: { 'Content-Type': undefined },
+  })
+  return response.data
+}
 
 export async function getEmployees(
   page: number,
