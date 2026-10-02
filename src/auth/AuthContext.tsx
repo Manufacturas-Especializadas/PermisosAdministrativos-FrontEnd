@@ -2,6 +2,7 @@ import {
     createContext,
     useContext,
     useEffect,
+    useRef,
     useState,
     type ReactNode,
 } from 'react'
@@ -16,6 +17,7 @@ import type { AuthUser } from './auth.types'
 import type { LoginRequest } from './authApi'
 import { registerUnauthorizedHandler } from '../api/http'
 import { queryClient } from '../api/queryClient'
+import { clearCsrfToken, fetchCsrfToken } from '../api/csrf'
 
 interface AuthContextValue {
     user: AuthUser | null
@@ -34,8 +36,10 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
     const [user, setUser] = useState<AuthUser | null>(null)
     const [isLoading, setIsLoading] = useState(true)
+    const mounted = useRef(false)
 
     useEffect(() => {
+        mounted.current = true
         let active = true
         const unregisterUnauthorizedHandler = registerUnauthorizedHandler(() => {
             if (!active) return
@@ -45,10 +49,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         const loadCurrentUser = async () => {
             try {
+                await fetchCsrfToken()
+                if (!active) return
                 const currentUser = await getCurrentUser()
                 if (active) setUser(currentUser)
             } catch {
-                if (active) setUser(null)
+                if (active) {
+                    clearCsrfToken()
+                    setUser(null)
+                }
             } finally {
                 if (active) setIsLoading(false)
             }
@@ -58,22 +67,35 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         return () => {
             active = false
+            mounted.current = false
             unregisterUnauthorizedHandler()
+            // StrictMode vuelve a montar el efecto inmediatamente: conserva su
+            // solicitud compartida y limpia solo si el proveedor sigue desmontado.
+            queueMicrotask(() => {
+                if (!mounted.current) clearCsrfToken()
+            })
         }
     }, [])
 
     const login = async (request: LoginRequest) => {
-        await loginRequest(request)
-
-        const currentUser = await getCurrentUser()
-
-        setUser(currentUser)
+        try {
+            await fetchCsrfToken()
+            await loginRequest(request)
+            clearCsrfToken()
+            await fetchCsrfToken()
+            const currentUser = await getCurrentUser()
+            setUser(currentUser)
+        } catch (error) {
+            clearCsrfToken()
+            throw error
+        }
     }
 
     const logout = async () => {
         await logoutRequest()
         setUser(null)
         queryClient.clear()
+        clearCsrfToken()
     }
 
     return (
