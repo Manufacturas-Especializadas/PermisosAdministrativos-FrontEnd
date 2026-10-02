@@ -10,6 +10,7 @@ import LoginPage from './pages/LoginPage'
 import PendingPermitsPage from './pages/PendingPermitsPage'
 import PersonalPermitHistoryPage from './pages/PersonalPermitHistoryPage'
 import PersonalPermitPage from './pages/PersonalPermitPage'
+import UsersPage from './pages/UsersPage'
 
 function App() {
   return (
@@ -42,6 +43,8 @@ function App() {
                     <ApprovedPermitsPage />
                   ) : feature.path === '/permits/history' ? (
                     <PersonalPermitHistoryPage />
+                  ) : feature.path === '/users' ? (
+                    <UsersPage />
                   ) : (
                     <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
                       {feature.label}
