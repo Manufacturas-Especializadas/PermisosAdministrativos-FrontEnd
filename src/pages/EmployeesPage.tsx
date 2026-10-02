@@ -5,11 +5,12 @@ import { useDebouncedValue } from '../features/employees/hooks/useDebouncedValue
 import { useImportEmployees } from '../features/employees/hooks/useImportEmployees'
 
 function getImportError(error: unknown): string {
-  if (isAxiosError<{ title?: unknown }>(error)) {
+  if (isAxiosError<string | { title?: unknown }>(error)) {
     if (error.response?.status === 401) return 'Tu sesión ha expirado. Vuelve a iniciar sesión.'
-    const title = error.response?.data?.title
-    if (error.response?.status === 400 && typeof title === 'string' && title.trim()) {
-      return title.trim()
+    const data = error.response?.data
+    const message = typeof data === 'string' ? data : data?.title
+    if (error.response?.status === 400 && typeof message === 'string' && message.trim()) {
+      return message.trim()
     }
   }
   return 'No se pudo importar el archivo. Inténtalo nuevamente.'

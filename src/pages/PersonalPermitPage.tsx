@@ -175,12 +175,17 @@ export default function PersonalPermitPage() {
                         <textarea
                             id="permit-reason"
                             required
+                            maxLength={500}
+                            aria-describedby="permit-reason-help"
                             value={reason}
                             onChange={(event) => setReason(event.target.value)}
                             rows={4}
                             placeholder="Describe brevemente el motivo..."
                             className="w-full resize-y rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
                         />
+                        <p id="permit-reason-help" className="text-sm text-slate-500">
+                            Máximo 500 caracteres.
+                        </p>
                     </div>
 
                     {createPermit.isSuccess && (
