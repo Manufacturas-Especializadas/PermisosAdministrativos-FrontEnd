@@ -4,6 +4,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import RoleRoute from './components/RoleRoute'
 import AppLayout from './layouts/AppLayout'
 import ApprovedPermitsPage from './pages/ApprovedPermitsPage'
+import DepartmentsPage from './pages/DepartmentsPage'
 import EmployeesPage from './pages/EmployeesPage'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
@@ -45,6 +46,8 @@ function App() {
                     <PersonalPermitHistoryPage />
                   ) : feature.path === '/users' ? (
                     <UsersPage />
+                  ) : feature.path === '/departments' ? (
+                    <DepartmentsPage />
                   ) : (
                     <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
                       {feature.label}
