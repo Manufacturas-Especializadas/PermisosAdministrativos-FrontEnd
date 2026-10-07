@@ -42,6 +42,7 @@ export default function UsersPage() {
     createUser.reset()
     const errors: string[] = []
     if (!userName.trim()) errors.push('Ingresa el nombre de usuario.')
+    else if (userName.trim().length < 4) errors.push('El nombre de usuario debe tener al menos 4 caracteres.')
     if (password.length < 8) errors.push('La contraseña debe tener al menos 8 caracteres.')
     if (!/[A-Z]/.test(password)) errors.push('La contraseña debe incluir al menos una mayúscula.')
     if (!/[a-z]/.test(password)) errors.push('La contraseña debe incluir al menos una minúscula.')
@@ -106,7 +107,7 @@ export default function UsersPage() {
           <div className="grid gap-5 sm:grid-cols-2">
             <div className="space-y-2">
               <label htmlFor="user-name" className="block text-sm font-medium text-slate-700">Usuario</label>
-              <input id="user-name" required autoComplete="off" value={userName} onChange={(event) => setUserName(event.target.value)} className={inputClass} />
+              <input id="user-name" required minLength={4} autoComplete="off" value={userName} onChange={(event) => setUserName(event.target.value)} className={inputClass} />
             </div>
             <div className="space-y-2">
               <label htmlFor="user-password" className="block text-sm font-medium text-slate-700">Contraseña</label>
