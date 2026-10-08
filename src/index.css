@@ -1,1 +1,74 @@
 @import "tailwindcss";
+
+@theme {
+  --color-mesa-canvas: #F8FAFC;
+  --color-mesa-border: #E2E8F0;
+  --color-mesa-text: #1E293B;
+  --color-mesa-muted: #475569;
+  --color-mesa-brand: #0EA5E9;
+  --color-mesa-primary: #0369A1;
+  --color-mesa-hover: #075985;
+  --color-mesa-selection: #E0F2FE;
+  --color-mesa-success: #15803D;
+  --color-mesa-warning: #B45309;
+  --color-mesa-error: #B91C1C;
+}
+
+@layer components {
+  .mesa-focus {
+    @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mesa-primary;
+  }
+
+  .mesa-button-primary, .mesa-button-secondary {
+    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mesa-primary disabled:cursor-wait motion-safe:transition-colors;
+  }
+
+  .mesa-button-primary {
+    @apply bg-mesa-primary text-white hover:bg-mesa-hover disabled:bg-mesa-border disabled:text-mesa-muted;
+  }
+
+  .mesa-button-secondary {
+    @apply border border-slate-300 bg-white text-mesa-text hover:bg-mesa-canvas disabled:bg-mesa-canvas disabled:text-mesa-muted;
+  }
+
+  .mesa-input {
+    @apply min-h-12 w-full rounded-lg border border-slate-400 bg-white px-3 py-2.5 text-base text-mesa-text focus-visible:border-mesa-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mesa-primary disabled:cursor-not-allowed disabled:bg-mesa-canvas disabled:text-mesa-muted motion-safe:transition-colors;
+  }
+
+  .mesa-alert-error {
+    @apply rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-mesa-error;
+  }
+
+  .mesa-drawer {
+    position: fixed;
+    inset: 0;
+    margin: 0;
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+    max-height: none;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .mesa-drawer::backdrop {
+    background: rgb(15 23 42 / 40%);
+  }
+
+  .mesa-drawer-panel {
+    width: min(20rem, calc(100% - 3rem));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .mesa-drawer[open] .mesa-drawer-panel {
+      animation: mesa-drawer-enter 160ms ease-out;
+    }
+  }
+}
+
+@keyframes mesa-drawer-enter {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
