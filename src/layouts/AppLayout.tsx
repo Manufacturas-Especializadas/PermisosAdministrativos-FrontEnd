@@ -45,9 +45,16 @@ export default function AppLayout({ children }: AppLayoutProps) {
       </a>
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-5 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
-          <p className="text-lg font-semibold tracking-tight text-slate-950">
-            Permisos Administrativos
-          </p>
+          <div className="flex min-w-0 items-center gap-3">
+            <img
+              src="/logomesa-1.png"
+              alt="Manufacturas Especializadas"
+              className="h-10 w-auto max-w-36 shrink-0 object-contain"
+            />
+            <p className="text-lg font-semibold tracking-tight text-slate-950">
+              Permisos Administrativos
+            </p>
+          </div>
           <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
             <div className="min-w-0 md:text-right">
               <p className="text-xs font-medium text-slate-500">Usuario</p>

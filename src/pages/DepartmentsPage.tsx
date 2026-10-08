@@ -1,4 +1,5 @@
 import { isAxiosError } from 'axios'
+import ImportDepartments from '../features/departments/components/ImportDepartments'
 import { useRef, useState } from 'react'
 import { useCreateDepartment } from '../features/departments/hooks/useCreateDepartment'
 import { useDepartments } from '../features/departments/hooks/useDepartments'
@@ -54,6 +55,8 @@ export default function DepartmentsPage() {
         <h1 id="departments-title" className="text-3xl font-semibold tracking-tight text-slate-950">Departamentos</h1>
         <p className="mt-1 text-sm text-slate-600">Administra los departamentos utilizados por los empleados.</p>
       </div>
+
+      <ImportDepartments />
 
       <form
         noValidate
