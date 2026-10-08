@@ -1,4 +1,7 @@
 import { isAxiosError } from 'axios'
+import Alert from '../components/Alert'
+import Button from '../components/Button'
+import TableContainer from '../components/TableContainer'
 import { useEffect, useRef, useState } from 'react'
 import { useApprovePersonalPermit } from '../features/personalPermits/hooks/useApprovePersonalPermit'
 import { usePendingPersonalPermits } from '../features/personalPermits/hooks/usePendingPersonalPermits'
@@ -20,8 +23,21 @@ export default function PendingPermitsPage() {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const reasonRef = useRef<HTMLTextAreaElement>(null)
   const titleRef = useRef<HTMLHeadingElement>(null)
+  const focusedPermitId = useRef<number | null>(null)
   const sessionExpired = isAxiosError(error) && error.response?.status === 401
   const isRejecting = selectedPermit !== null && processing[selectedPermit.id] === 'reject'
+
+  // Recupera el foco solo si el registro enfocado desaparece; no interrumpe al usuario ni al dialogo.
+  useEffect(() => {
+    if (
+      data && focusedPermitId.current !== null &&
+      !data.some((permit) => permit.id === focusedPermitId.current) &&
+      !dialogRef.current?.open && document.activeElement === document.body
+    ) {
+      titleRef.current?.focus()
+      focusedPermitId.current = null
+    }
+  }, [data])
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -86,121 +102,162 @@ export default function PendingPermitsPage() {
     }
   }
 
-  return (
-    <section aria-labelledby="pending-permits-title" className="space-y-6">
-      <div>
-        <h1
-          id="pending-permits-title"
-          ref={titleRef}
-          tabIndex={-1}
-          className="text-3xl font-semibold tracking-tight text-slate-950"
+  function renderActions(permit: PendingPersonalPermit) {
+    return (
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-1 md:gap-2">
+        <Button
+          aria-label={`Aprobar permiso de ${permit.employeeName}, nómina ${permit.payrollNumber}, solicitud ${permit.id}`}
+          disabled={!!processing[permit.id]}
+          loading={processing[permit.id] === 'approve'}
+          loadingText="Aprobando..."
+          onClick={() => void reviewPermit(permit, 'approve')}
         >
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m5 12 4 4L19 6" /></svg>
+          Aprobar
+        </Button>
+        <Button
+          variant="danger-outline"
+          aria-label={`Rechazar permiso de ${permit.employeeName}, nómina ${permit.payrollNumber}, solicitud ${permit.id}`}
+          disabled={!!processing[permit.id]}
+          loading={processing[permit.id] === 'reject'}
+          loadingText="Rechazando..."
+          onClick={() => {
+            clearReviewError(permit.id)
+            setRejectionReason('')
+            setSelectedPermit(permit)
+          }}
+        >
+          Rechazar
+        </Button>
+      </div>
+    )
+  }
+
+  return (
+    <section
+      aria-labelledby="pending-permits-title"
+      className="min-w-0 space-y-5 text-mesa-text md:space-y-6"
+      onFocusCapture={(event) => {
+        const record = event.target.closest<HTMLElement>('[data-permit-id]')
+        focusedPermitId.current = record ? Number(record.dataset.permitId) : null
+      }}
+    >
+      <div className="space-y-2">
+        <p className="text-sm font-semibold text-mesa-primary">Revisión de Recursos Humanos</p>
+        <h1 id="pending-permits-title" ref={titleRef} tabIndex={-1} className="mesa-focus text-2xl font-semibold tracking-tight md:text-3xl">
           Permisos pendientes
         </h1>
-        <p className="mt-1 text-sm text-slate-600">
-          Consulta los permisos personales pendientes de revisión por Recursos Humanos.
+        <p className="max-w-3xl text-base leading-relaxed text-mesa-muted">
+          Revisa el empleado, la fecha y el motivo antes de aprobar o rechazar cada solicitud.
         </p>
       </div>
 
-      <div className="min-h-6 text-sm text-slate-600" role="status" aria-live="polite">
+      <div className="min-h-6 text-sm text-mesa-muted" role="status" aria-live="polite" aria-atomic="true">
         {isFetching
           ? isPending
             ? 'Cargando permisos pendientes...'
             : 'Actualizando permisos pendientes...'
           : isPending
             ? 'Esperando conexión para cargar los permisos pendientes...'
-            : null}
+            : data && !isError
+              ? `${data.length} ${data.length === 1 ? 'solicitud pendiente de revisión' : 'solicitudes pendientes de revisión'}.`
+              : null}
       </div>
 
       {Object.entries(reviewErrors).map(([permitId, message]) => (
-        <p key={permitId} role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          {message}
-        </p>
+        <Alert key={permitId} title="No se pudo completar la acción">{message}</Alert>
       ))}
 
       {isError && (
-        <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+        <Alert
+          variant={!sessionExpired && data ? 'warning' : 'error'}
+          title={sessionExpired ? 'Sesión expirada' : data ? 'No se pudo actualizar la información' : 'No se pudieron cargar los permisos'}
+        >
           {sessionExpired
             ? 'Tu sesión ha expirado. Vuelve a iniciar sesión para consultar los permisos pendientes.'
-            : 'No se pudieron cargar los permisos pendientes. Inténtalo de nuevo más tarde.'}
-        </p>
+            : data
+              ? 'Los datos mostrados corresponden a la última consulta correcta. Existe un problema actualizando la información.'
+              : 'No se pudieron cargar los permisos pendientes. Inténtalo de nuevo más tarde.'}
+        </Alert>
       )}
 
       {isPending ? (
-        <div className="min-h-40 rounded-xl border border-slate-200 bg-white" aria-busy="true" />
-      ) : !data || sessionExpired ? null : data.length === 0 ? (
-        <p role="status" className="rounded-xl border border-slate-200 bg-white p-6 text-slate-600">
-          No hay permisos pendientes de revisión.
-        </p>
-      ) : (
-        <div
-          className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
-          role="region"
-          aria-label="Listado de permisos pendientes"
-          aria-busy={isFetching}
-          tabIndex={0}
-        >
-          <table className="w-full min-w-220 text-left text-sm">
-            <caption className="sr-only">
-              Permisos pendientes: empleado, nómina, fecha, hora, tipo, motivo y acciones
-            </caption>
-            <thead className="border-b border-slate-200 bg-slate-100 text-slate-700">
-              <tr>
-                <th scope="col" className="px-4 py-3 font-semibold">Empleado</th>
-                <th scope="col" className="px-4 py-3 font-semibold">Nómina</th>
-                <th scope="col" className="px-4 py-3 font-semibold">Fecha</th>
-                <th scope="col" className="px-4 py-3 font-semibold">Hora</th>
-                <th scope="col" className="px-4 py-3 font-semibold">Tipo</th>
-                <th scope="col" className="px-4 py-3 font-semibold">Motivo</th>
-                <th scope="col" className="px-4 py-3 font-semibold">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200">
-              {data.map((permit) => (
-                <tr key={permit.id}>
-                  <th scope="row" className="px-4 py-3 font-medium wrap-anywhere text-slate-900">
-                    {permit.employeeName}
-                  </th>
-                  <td className="px-4 py-3 wrap-anywhere text-slate-600">{permit.payrollNumber}</td>
-                  <td className="px-4 py-3 whitespace-nowrap text-slate-600">
-                    {formatPermitDate(permit.permitDate)}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-slate-600">
-                    {permit.exitTime.slice(0, 5)}
-                  </td>
-                  <td className="px-4 py-3 text-slate-600">{permitTypeLabels[permit.permitType]}</td>
-                  <td className="px-4 py-3 whitespace-pre-wrap wrap-anywhere text-slate-600">{permit.reason}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        aria-label={`Aprobar permiso de ${permit.employeeName}`}
-                        disabled={!!processing[permit.id]}
-                        onClick={() => void reviewPermit(permit, 'approve')}
-                        className="min-h-11 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-                      >
-                        {processing[permit.id] === 'approve' ? 'Aprobando...' : 'Aprobar'}
-                      </button>
-                      <button
-                        type="button"
-                        aria-label={`Rechazar permiso de ${permit.employeeName}`}
-                        disabled={!!processing[permit.id]}
-                        onClick={() => {
-                          clearReviewError(permit.id)
-                          setRejectionReason('')
-                          setSelectedPermit(permit)
-                        }}
-                        className="min-h-11 rounded-lg border border-red-300 bg-white px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {processing[permit.id] === 'reject' ? 'Rechazando...' : 'Rechazar'}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="space-y-4 rounded-xl border border-mesa-border bg-white p-5 md:p-6" aria-busy="true">
+          <div aria-hidden="true" className="space-y-4">
+            <div className="h-5 w-2/5 rounded bg-slate-100" />
+            <div className="h-4 w-3/4 rounded bg-slate-100" />
+            <div className="h-4 w-1/2 rounded bg-slate-100" />
+          </div>
         </div>
+      ) : !data || sessionExpired ? null : data.length === 0 ? (
+        <div role="status" className="space-y-2 rounded-xl border border-mesa-border bg-white p-6 md:p-8">
+          <h2 className="text-lg font-semibold">{isError ? 'Sin solicitudes en la última consulta correcta' : 'No hay permisos pendientes de revisión.'}</h2>
+          <p className="text-sm leading-relaxed text-mesa-muted">
+            {isError ? 'No se ha podido comprobar si hay nuevas solicitudes.' : 'Las solicitudes pendientes se mostrarán aquí para que RH pueda revisarlas.'}
+          </p>
+        </div>
+      ) : (
+        <>
+          <div className="md:hidden" role="region" aria-label="Solicitudes pendientes" aria-busy={isFetching}>
+            <ul className="space-y-4">
+              {data.map((permit) => (
+                <li key={permit.id} data-permit-id={permit.id} className="min-w-0 rounded-xl border border-mesa-border bg-white p-4">
+                  <article aria-labelledby={`permit-mobile-${permit.id}`} className="space-y-4">
+                    <div className="sticky top-0 z-10 space-y-1 border-b border-mesa-border bg-white py-2">
+                      <p className="text-sm text-mesa-muted">Solicitud #{permit.id}</p>
+                      <h2 id={`permit-mobile-${permit.id}`} className="text-lg leading-snug font-semibold wrap-anywhere">{permit.employeeName}</h2>
+                      <p className="text-sm wrap-anywhere text-mesa-muted">Nómina: <span className="font-medium text-mesa-text">{permit.payrollNumber}</span></p>
+                    </div>
+                    <dl className="space-y-2 rounded-lg bg-mesa-canvas p-3 text-sm">
+                      <div className="flex flex-wrap justify-between gap-x-4 gap-y-1"><dt className="text-mesa-muted">Fecha</dt><dd className="font-medium">{formatPermitDate(permit.permitDate)}</dd></div>
+                      <div className="flex flex-wrap justify-between gap-x-4 gap-y-1"><dt className="text-mesa-muted">Hora de salida</dt><dd className="font-medium">{permit.exitTime.slice(0, 5)}</dd></div>
+                      <div className="flex flex-wrap justify-between gap-x-4 gap-y-1"><dt className="text-mesa-muted">Tipo</dt><dd className="font-medium">{permitTypeLabels[permit.permitType]}</dd></div>
+                    </dl>
+                    <div className="space-y-1">
+                      <h3 className="text-sm font-semibold">Motivo</h3>
+                      <p className="text-base leading-relaxed whitespace-pre-wrap wrap-anywhere text-mesa-muted">{permit.reason}</p>
+                    </div>
+                    <div className="border-t border-mesa-border pt-4">{renderActions(permit)}</div>
+                  </article>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <TableContainer label="Listado de permisos pendientes" busy={isFetching} className="hidden md:block">
+            <table className="w-full min-w-192 table-fixed text-left text-sm">
+              <caption className="sr-only">Permisos pendientes: identidad del empleado, información del permiso, motivo y acciones</caption>
+              <thead className="border-b border-mesa-border bg-mesa-canvas text-mesa-muted">
+                <tr>
+                  <th scope="col" className="w-[26%] px-4 py-4 font-semibold">Empleado</th>
+                  <th scope="col" className="w-[21%] px-4 py-4 font-semibold">Permiso</th>
+                  <th scope="col" className="w-[33%] px-4 py-4 font-semibold">Motivo</th>
+                  <th scope="col" className="w-[20%] px-4 py-4 font-semibold">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-mesa-border">
+                {data.map((permit) => (
+                  <tr key={permit.id} data-permit-id={permit.id} className="align-top">
+                    <th scope="row" className="space-y-2 px-4 py-5 font-normal">
+                      <p className="text-base leading-snug font-semibold wrap-anywhere">{permit.employeeName}</p>
+                      <p className="wrap-anywhere text-mesa-muted">Nómina: <span className="font-medium text-mesa-text">{permit.payrollNumber}</span></p>
+                    </th>
+                    <td className="space-y-3 px-4 py-5">
+                      <p className="text-mesa-muted">Solicitud #{permit.id}</p>
+                      <dl className="space-y-2">
+                        <div><dt className="text-mesa-muted">Fecha</dt><dd className="font-medium">{formatPermitDate(permit.permitDate)}</dd></div>
+                        <div><dt className="text-mesa-muted">Hora de salida</dt><dd className="font-medium">{permit.exitTime.slice(0, 5)}</dd></div>
+                        <div><dt className="text-mesa-muted">Tipo</dt><dd className="font-medium">{permitTypeLabels[permit.permitType]}</dd></div>
+                      </dl>
+                    </td>
+                    <td className="px-4 py-5 text-base leading-relaxed whitespace-pre-wrap wrap-anywhere text-mesa-muted">{permit.reason}</td>
+                    <td className="px-4 py-5">{renderActions(permit)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </TableContainer>
+        </>
       )}
 
       <dialog
@@ -213,7 +270,7 @@ export default function PendingPermitsPage() {
           event.preventDefault()
           closeRejectionDialog()
         }}
-        className="fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-lg overflow-y-auto rounded-xl border border-slate-200 bg-white p-6 text-slate-900 shadow-xl backdrop:bg-slate-950/50"
+        className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg overflow-y-auto overscroll-contain rounded-2xl border border-mesa-border bg-white p-4 text-mesa-text shadow-xl backdrop:bg-slate-950/50 sm:p-6"
       >
         {selectedPermit && (
           <form
@@ -224,13 +281,13 @@ export default function PendingPermitsPage() {
               void reviewPermit(selectedPermit, 'reject')
             }}
           >
-            <h2 id="reject-permit-title" className="text-xl font-semibold">Rechazar permiso</h2>
-            <p id="reject-permit-description" className="text-sm wrap-anywhere text-slate-600">
+            <h2 id="reject-permit-title" className="text-xl font-semibold text-mesa-error">Rechazar permiso</h2>
+            <p id="reject-permit-description" className="rounded-lg border border-mesa-border bg-mesa-canvas p-3 text-base leading-relaxed wrap-anywhere text-mesa-text">
               Permiso de <strong>{selectedPermit.employeeName}</strong>, nómina {selectedPermit.payrollNumber},
               {' '}del {formatPermitDate(selectedPermit.permitDate)} a las {selectedPermit.exitTime.slice(0, 5)}.
             </p>
             <div className="space-y-2">
-              <label htmlFor="rejection-reason" className="block text-sm font-medium text-slate-700">
+              <label htmlFor="rejection-reason" className="block text-sm font-semibold text-mesa-text">
                 Motivo del rechazo (obligatorio)
               </label>
               <textarea
@@ -243,33 +300,31 @@ export default function PendingPermitsPage() {
                 disabled={isRejecting}
                 aria-describedby="rejection-reason-count"
                 onChange={(event) => setRejectionReason(event.target.value)}
-                className="w-full resize-y rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus-visible:border-blue-600 focus-visible:ring-2 focus-visible:ring-blue-100 disabled:bg-slate-100"
+                className="mesa-input min-h-36 resize-y"
               />
-              <p id="rejection-reason-count" className="text-sm text-slate-500">
+              <p id="rejection-reason-count" className="text-sm text-mesa-muted">
                 {rejectionReason.length}/500 caracteres
               </p>
             </div>
             {reviewErrors[selectedPermit.id] && (
-              <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-                {reviewErrors[selectedPermit.id]}
-              </p>
+              <Alert>{reviewErrors[selectedPermit.id]}</Alert>
             )}
-            <div className="flex flex-wrap justify-end gap-3">
-              <button
+            <div className="flex flex-col gap-3 border-t border-mesa-border pt-4 sm:flex-row sm:justify-end">
+              <Button
+                variant="secondary"
                 type="button"
                 disabled={isRejecting}
                 onClick={closeRejectionDialog}
-                className="min-h-11 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Cancelar
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="danger"
                 type="submit"
                 disabled={isRejecting || !rejectionReason.trim() || rejectionReason.length > 500}
-                className="min-h-11 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700 disabled:cursor-not-allowed disabled:bg-slate-300"
               >
                 {isRejecting ? 'Rechazando...' : 'Rechazar permiso'}
-              </button>
+              </Button>
             </div>
           </form>
         )}
