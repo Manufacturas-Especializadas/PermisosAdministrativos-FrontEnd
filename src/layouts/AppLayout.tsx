@@ -1,5 +1,8 @@
-import { useState, type ReactNode } from 'react'
-import { NavLink, useNavigate } from 'react-router'
+import { useCallback, useState, type ReactNode } from 'react'
+import { useLocation, useNavigate } from 'react-router'
+import BrandLogo from '../components/BrandLogo'
+import AppNavigation from '../components/AppNavigation'
+import MobileNavigation from '../components/MobileNavigation'
 import { useAuth } from '../auth/AuthContext'
 import { hasAllowedRole, protectedFeatures } from '../auth/roleAccess'
 
@@ -10,6 +13,9 @@ interface AppLayoutProps {
 export default function AppLayout({ children }: AppLayoutProps) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  const [menuOpen, setMenuOpen] = useState(false)
+  const closeMenu = useCallback(() => setMenuOpen(false), [])
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [error, setError] = useState('')
   const navigationItems = [
@@ -35,71 +41,66 @@ export default function AppLayout({ children }: AppLayoutProps) {
     }
   }
 
+  const currentSection = navigationItems.find((item) => item.path === location.pathname)?.label ?? 'Permisos Administrativos'
+  const userActions = (
+    <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-center">
+      <div className="min-w-0 md:max-w-52">
+        <p className="text-xs font-medium text-mesa-muted">Usuario</p>
+        <p className="text-sm font-medium wrap-anywhere">{user?.userName}</p>
+      </div>
+      <button type="button" className="mesa-button-secondary shrink-0" onClick={handleLogout} disabled={isLoggingOut}>
+        {isLoggingOut ? 'Cerrando sesión...' : 'Cerrar sesión'}
+      </button>
+    </div>
+  )
+
   return (
-    <div className="flex min-h-dvh flex-col bg-slate-50 text-slate-900">
-      <a
-        className="sr-only z-10 rounded-lg bg-blue-700 px-4 py-3 font-medium text-white focus:not-sr-only focus:absolute focus:top-3 focus:left-4 focus:outline-2 focus:outline-offset-2 focus:outline-blue-700"
-        href="#main-content"
-      >
+    <div className="min-h-dvh bg-mesa-canvas text-mesa-text xl:grid xl:grid-cols-[15rem_minmax(0,1fr)]">
+      <a href="#main-content" className="mesa-focus sr-only z-20 rounded-lg bg-mesa-primary px-4 py-3 text-white focus:not-sr-only focus:fixed focus:top-3 focus:left-3">
         Ir al contenido principal
       </a>
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-5 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
-          <div className="flex min-w-0 items-center gap-3">
-            <img
-              src="/logomesa-1.png"
-              alt="Manufacturas Especializadas"
-              className="h-10 w-auto max-w-36 shrink-0 object-contain"
-            />
-            <p className="text-lg font-semibold tracking-tight text-slate-950">
-              Permisos Administrativos
-            </p>
-          </div>
-          <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
-            <div className="min-w-0 md:text-right">
-              <p className="text-xs font-medium text-slate-500">Usuario</p>
-              <p className="wrap-anywhere text-sm font-medium">{user?.userName}</p>
+      <aside className="sticky top-0 hidden h-dvh min-w-0 flex-col overflow-y-auto border-r border-mesa-border bg-white px-4 py-6 xl:flex" aria-label="Navegación de escritorio">
+        <div className="mb-6 space-y-3 px-3">
+          <BrandLogo size="sidebar" />
+          <p className="text-lg leading-snug font-semibold">Permisos Administrativos</p>
+          <div className="h-1 w-10 rounded-full bg-mesa-brand" aria-hidden="true" />
+        </div>
+        <AppNavigation items={navigationItems} />
+      </aside>
+      <div className="min-w-0">
+        <header className="border-b border-mesa-border bg-white px-4 py-3 md:px-6 xl:px-8">
+          <div className="flex min-w-0 items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <button
+                type="button"
+                className="mesa-button-secondary shrink-0 xl:hidden"
+                aria-expanded={menuOpen}
+                aria-controls="mobile-navigation"
+                aria-haspopup="dialog"
+                onClick={() => setMenuOpen(true)}
+              >
+                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M3 12h18M3 18h18" /></svg>
+                Menú
+              </button>
+              <div className="xl:hidden"><BrandLogo /></div>
+              <p className="hidden text-lg font-semibold wrap-anywhere lg:block">Permisos Administrativos</p>
             </div>
-            <button
-              className="min-h-11 shrink-0 cursor-pointer rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:cursor-wait disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-500"
-              type="button"
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-            >
-              {isLoggingOut ? 'Cerrando sesión...' : 'Cerrar sesión'}
+            <div className="hidden min-w-0 md:block">{userActions}</div>
+            <button type="button" className="mesa-button-secondary shrink-0 md:hidden" onClick={handleLogout} disabled={isLoggingOut}>
+              {isLoggingOut ? 'Cerrando...' : 'Salir'}
             </button>
           </div>
-        </div>
-        <nav className="border-t border-slate-100" aria-label="Navegación principal">
-          <ul className="mx-auto flex max-w-6xl flex-wrap gap-2 px-4 py-3 sm:px-6 lg:px-8">
-            {navigationItems.map((item) => (
-              <li key={item.path}>
-                <NavLink
-                  to={item.path}
-                  end
-                  className={({ isActive }) =>
-                    `inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 ${
-                      isActive
-                        ? 'bg-blue-50 text-blue-800'
-                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950'
-                    }`
-                  }
-                >
-                  {item.label}
-                </NavLink>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      </header>
-      <main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
-        {error && (
-          <p className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
-            {error}
-          </p>
-        )}
-        {children}
-      </main>
+          <p className="mt-3 text-sm font-medium wrap-anywhere text-mesa-muted" aria-label="Sección actual">{currentSection}</p>
+        </header>
+        <main id="main-content" tabIndex={-1} className="mesa-focus min-w-0 px-4 py-6 text-slate-900 md:px-6 md:py-8 xl:px-8">
+          {error && !menuOpen && <p className="mesa-alert-error mb-6" role="alert">{error}</p>}
+          {children}
+        </main>
+      </div>
+      <MobileNavigation open={menuOpen} onClose={closeMenu} items={navigationItems}>
+        {error && menuOpen && <p className="mesa-alert-error mb-3" role="alert">{error}</p>}
+        {userActions}
+      </MobileNavigation>
     </div>
   )
 }
