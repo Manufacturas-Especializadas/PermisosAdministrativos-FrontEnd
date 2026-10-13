@@ -1,5 +1,9 @@
 import { isAxiosError } from 'axios'
 import { useRef, useState } from 'react'
+import Alert from '../components/Alert'
+import Button from '../components/Button'
+import StatusBadge from '../components/StatusBadge'
+import TableContainer from '../components/TableContainer'
 import { EmployeeSelector } from '../features/employees/components/EmployeeSelector'
 import type { Employee } from '../features/employees/employees.types'
 import { useCreateUser } from '../features/users/hooks/useCreateUser'
@@ -8,9 +12,6 @@ import { useUsers } from '../features/users/hooks/useUsers'
 import type { User } from '../features/users/users.types'
 
 const roles = ['Administrator', 'Supervisor', 'HumanResources', 'Security']
-const inputClass = 'min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100'
-const buttonClass = 'min-h-11 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300'
-const errorClass = 'rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800'
 
 function getCreationError(error: unknown): string {
   if (isAxiosError<{ detail?: unknown; title?: unknown }>(error) && error.response?.status === 400) {
@@ -22,6 +23,7 @@ function getCreationError(error: unknown): string {
 }
 
 export default function UsersPage() {
+  const [createOpen, setCreateOpen] = useState(false)
   const users = useUsers()
   const createUser = useCreateUser()
   const setUserStatus = useSetUserStatus()
@@ -87,99 +89,186 @@ export default function UsersPage() {
     }
   }
 
+  function renderStatusAction(user: User) {
+    return (
+      <div className="min-w-0 space-y-3">
+        <Button
+          variant={user.isActive ? 'danger-outline' : 'secondary'}
+          disabled={!!processing[user.id]}
+          loading={!!processing[user.id]}
+          aria-label={`${processing[user.id] ? 'Guardando estado de' : user.isActive ? 'Desactivar' : 'Activar'} ${user.userName}`}
+          onClick={() => void toggleStatus(user)}
+          className="w-full md:w-auto"
+        >
+          {processing[user.id] ? 'Guardando...' : user.isActive ? 'Desactivar' : 'Activar'}
+        </Button>
+        {statusErrors[user.id] && <Alert>{statusErrors[user.id]}</Alert>}
+      </div>
+    )
+  }
+
   return (
-    <section aria-labelledby="users-title" className="space-y-6">
-      <div>
-        <h1 id="users-title" className="text-3xl font-semibold tracking-tight text-slate-950">Usuarios</h1>
-        <p className="mt-1 text-sm text-slate-600">Administra los usuarios que tienen acceso al sistema.</p>
+    <section aria-labelledby="users-title" className="min-w-0 space-y-6 text-mesa-text">
+      <header className="space-y-2">
+        <h1 id="users-title" className="text-3xl font-semibold tracking-tight">Usuarios</h1>
+        <p className="text-mesa-muted">Administra los usuarios que tienen acceso al sistema.</p>
+      </header>
+
+      <div className="min-w-0 space-y-4">
+        <Button
+          aria-expanded={createOpen}
+          aria-controls="create-user-panel"
+          onClick={() => setCreateOpen((open) => !open)}
+          className="w-full md:w-auto"
+        >
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
+            <path d={createOpen ? 'm6 15 6-6 6 6' : 'M12 5v14M5 12h14'} />
+          </svg>
+          Crear usuario
+        </Button>
+        <form
+          id="create-user-panel"
+          hidden={!createOpen}
+          noValidate
+          onSubmit={(event) => { event.preventDefault(); void handleSubmit() }}
+          aria-labelledby="create-user-title"
+          aria-describedby={validationErrors.length > 0 ? 'create-user-validation' : undefined}
+          aria-busy={createUser.isPending}
+          className="min-w-0 space-y-5 rounded-xl border border-mesa-border bg-white p-4 md:p-6"
+        >
+          <h2 id="create-user-title" className="text-lg font-semibold">Crear usuario</h2>
+          <fieldset disabled={createUser.isPending} className="min-w-0 space-y-6">
+            <legend className="sr-only">Datos del usuario</legend>
+            <section aria-labelledby="user-access-title" className="min-w-0 space-y-4">
+              <h3 id="user-access-title" className="font-semibold">Acceso</h3>
+              <div className="grid min-w-0 gap-4 md:grid-cols-2">
+                <div className="min-w-0 space-y-2">
+                  <label htmlFor="user-name" className="block text-sm font-medium">Usuario</label>
+                  <input id="user-name" required minLength={4} autoComplete="off" value={userName} onChange={(event) => setUserName(event.target.value)} aria-describedby="user-name-help" className="mesa-input min-w-0" />
+                  <p id="user-name-help" className="text-sm text-mesa-muted">Mínimo 4 caracteres.</p>
+                </div>
+                <div className="min-w-0 space-y-2">
+                  <label htmlFor="user-password" className="block text-sm font-medium">Contraseña</label>
+                  <input id="user-password" type="password" required minLength={8} autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} aria-describedby="password-help" className="mesa-input min-w-0" />
+                  <p id="password-help" className="text-sm leading-relaxed text-mesa-muted">Mínimo 8 caracteres, una mayúscula, una minúscula y un número. No requiere carácter especial.</p>
+                </div>
+              </div>
+            </section>
+
+            <section aria-labelledby="user-employee-title" className="min-w-0 space-y-4 border-t border-mesa-border pt-5">
+              <h3 id="user-employee-title" className="font-semibold">Empleado asociado</h3>
+              <div className="space-y-2">
+                <label htmlFor="user-employee" className="block text-sm font-medium">Empleado (opcional)</label>
+                <select id="user-employee" value={associateEmployee ? 'employee' : 'none'} onChange={(event) => { setAssociateEmployee(event.target.value === 'employee'); setSelectedEmployee(null) }} className="mesa-input">
+                  <option value="none">Sin empleado asociado</option>
+                  <option value="employee">Seleccionar empleado</option>
+                </select>
+              </div>
+              {associateEmployee && (
+                <div className="min-w-0 wrap-anywhere [&_input]:min-w-0 [&_input]:min-h-12 [&_input]:text-base [&_button]:min-h-12 [&_button]:focus-visible:outline-2 [&_button]:focus-visible:outline-offset-2 [&_button]:focus-visible:outline-mesa-primary">
+                  <EmployeeSelector selectedEmployee={selectedEmployee} onSelect={setSelectedEmployee} onClear={() => setSelectedEmployee(null)} />
+                </div>
+              )}
+            </section>
+
+            <section aria-labelledby="user-profile-title" className="min-w-0 space-y-4 border-t border-mesa-border pt-5">
+              <h3 id="user-profile-title" className="font-semibold">Perfil</h3>
+              <div className="space-y-2 md:max-w-md">
+                <label htmlFor="user-role" className="block text-sm font-medium">Rol</label>
+                <select id="user-role" required value={role} onChange={(event) => setRole(event.target.value)} className="mesa-input">
+                  <option value="">Selecciona un rol</option>
+                  {roles.map((value) => <option key={value} value={value}>{value}</option>)}
+                </select>
+              </div>
+            </section>
+            {validationErrors.length > 0 && (
+              <Alert id="create-user-validation">
+                <ul className="list-disc space-y-1 pl-5">{validationErrors.map((message) => <li key={message}>{message}</li>)}</ul>
+              </Alert>
+            )}
+            {createUser.isError && <Alert>{getCreationError(createUser.error)}</Alert>}
+            {createUser.isSuccess && <Alert variant="success">Usuario creado correctamente.</Alert>}
+            <div className="flex border-t border-mesa-border pt-5 md:justify-end">
+              <Button type="submit" disabled={createUser.isPending} loading={createUser.isPending} className="w-full md:w-auto">{createUser.isPending ? 'Creando...' : 'Crear usuario'}</Button>
+            </div>
+          </fieldset>
+        </form>
       </div>
 
-      <form
-        noValidate
-        onSubmit={(event) => { event.preventDefault(); void handleSubmit() }}
-        aria-labelledby="create-user-title"
-        aria-busy={createUser.isPending}
-        className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
-      >
-        <h2 id="create-user-title" className="mb-5 text-lg font-semibold text-slate-900">Crear usuario</h2>
-        <fieldset disabled={createUser.isPending} className="min-w-0 space-y-5">
-          <legend className="sr-only">Datos del usuario</legend>
-          <div className="grid gap-5 sm:grid-cols-2">
-            <div className="space-y-2">
-              <label htmlFor="user-name" className="block text-sm font-medium text-slate-700">Usuario</label>
-              <input id="user-name" required minLength={4} autoComplete="off" value={userName} onChange={(event) => setUserName(event.target.value)} className={inputClass} />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="user-password" className="block text-sm font-medium text-slate-700">Contraseña</label>
-              <input id="user-password" type="password" required minLength={8} autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} aria-describedby="password-help" className={inputClass} />
-              <p id="password-help" className="text-sm text-slate-500">Mínimo 8 caracteres, una mayúscula, una minúscula y un número. No requiere carácter especial.</p>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <label htmlFor="user-employee" className="block text-sm font-medium text-slate-700">Empleado (opcional)</label>
-            <select id="user-employee" value={associateEmployee ? 'employee' : 'none'} onChange={(event) => { setAssociateEmployee(event.target.value === 'employee'); setSelectedEmployee(null) }} className={inputClass}>
-              <option value="none">Sin empleado asociado</option>
-              <option value="employee">Seleccionar empleado</option>
-            </select>
-          </div>
-          {associateEmployee && (
-            <EmployeeSelector selectedEmployee={selectedEmployee} onSelect={setSelectedEmployee} onClear={() => setSelectedEmployee(null)} />
-          )}
-          <div className="space-y-2">
-            <label htmlFor="user-role" className="block text-sm font-medium text-slate-700">Rol</label>
-            <select id="user-role" required value={role} onChange={(event) => setRole(event.target.value)} className={inputClass}>
-              <option value="">Selecciona un rol</option>
-              {roles.map((value) => <option key={value} value={value}>{value}</option>)}
-            </select>
-          </div>
-          {validationErrors.length > 0 && (
-            <div role="alert" className={errorClass}>
-              <ul className="list-disc space-y-1 pl-5">{validationErrors.map((message) => <li key={message}>{message}</li>)}</ul>
-            </div>
-          )}
-          {createUser.isError && <p role="alert" className={errorClass}>{getCreationError(createUser.error)}</p>}
-          {createUser.isSuccess && <p role="status" className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">Usuario creado correctamente.</p>}
-          <div className="flex justify-end border-t border-slate-200 pt-5">
-            <button type="submit" disabled={createUser.isPending} className={buttonClass}>{createUser.isPending ? 'Creando...' : 'Crear usuario'}</button>
-          </div>
-        </fieldset>
-      </form>
-
-      <section aria-labelledby="registered-users-title" className="space-y-4">
-        <h2 id="registered-users-title" className="text-lg font-semibold text-slate-900">Usuarios registrados</h2>
-        {users.isPending && <p role="status" className="text-sm text-slate-600">Cargando usuarios...</p>}
+      <section aria-labelledby="registered-users-title" className="min-w-0 space-y-4">
+        <div className="space-y-1">
+          <h2 id="registered-users-title" className="text-lg font-semibold">Usuarios registrados</h2>
+          <p role="status" className="text-sm text-mesa-muted">
+            {!users.isPending && users.isFetching ? 'Actualizando usuarios...' : ''}
+          </p>
+        </div>
+        {users.isPending && <p role="status" className="rounded-xl border border-mesa-border bg-white p-6 text-mesa-muted">Cargando usuarios...</p>}
         {users.isError && (
-          <p role="alert" className={errorClass}>{sessionExpired ? 'Tu sesión ha expirado. Vuelve a iniciar sesión.' : 'No se pudieron cargar los usuarios. Inténtalo nuevamente.'}</p>
+          <Alert>
+            <p>{sessionExpired ? 'Tu sesión ha expirado. Vuelve a iniciar sesión.' : 'No se pudieron cargar los usuarios. Inténtalo nuevamente.'}</p>
+            {!sessionExpired && !!users.data?.length && <p className="mt-2">Los datos mostrados corresponden a la última consulta correcta y existe un problema actualizando la información.</p>}
+          </Alert>
         )}
         {!users.isPending && !sessionExpired && users.data && (users.data.length === 0 ? (
-          <p role="status" className="rounded-xl border border-slate-200 bg-white p-6 text-slate-600">No hay usuarios registrados.</p>
+          <p role="status" className="rounded-xl border border-mesa-border bg-white p-6 text-mesa-muted">No hay usuarios registrados.</p>
         ) : (
-          <div role="region" aria-label="Listado de usuarios" tabIndex={0} className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">
-            <table className="w-full min-w-180 text-left text-sm">
-              <caption className="sr-only">Usuarios registrados y acciones para activar o desactivar su acceso</caption>
-              <thead className="border-b border-slate-200 bg-slate-100 text-slate-700">
-                <tr>{['Usuario', 'Empleado', 'Rol', 'Estado', 'Acción'].map((title) => <th key={title} scope="col" className="px-4 py-3 font-semibold">{title}</th>)}</tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {users.data.map((user) => (
-                  <tr key={user.id}>
-                    <th scope="row" className="px-4 py-3 font-medium wrap-anywhere text-slate-900">{user.userName}</th>
-                    <td className="px-4 py-3 wrap-anywhere text-slate-600">
-                      {user.employeeName === null ? 'Sin empleado' : <><p>{user.employeeName}</p><p className="mt-1 text-xs text-slate-500">{user.payrollNumber}</p></>}
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">{user.roles.join(', ')}</td>
-                    <td className="px-4 py-3 text-slate-600">{user.isActive ? 'Activo' : 'Inactivo'}</td>
-                    <td className="px-4 py-3">
-                      <button type="button" disabled={!!processing[user.id]} aria-label={`${processing[user.id] ? 'Guardando estado de' : user.isActive ? 'Desactivar' : 'Activar'} ${user.userName}`} onClick={() => void toggleStatus(user)} className={buttonClass}>
-                        {processing[user.id] ? 'Guardando...' : user.isActive ? 'Desactivar' : 'Activar'}
-                      </button>
-                      {statusErrors[user.id] && <p role="alert" className="mt-2 text-sm text-red-700">{statusErrors[user.id]}</p>}
-                    </td>
+          <>
+            <ul aria-label="Listado de usuarios" aria-busy={users.isFetching} className="min-w-0 space-y-3 md:hidden">
+              {users.data.map((user) => (
+                <li key={user.id} className="min-w-0 space-y-4 rounded-xl border border-mesa-border bg-white p-4">
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-semibold wrap-anywhere">{user.userName}</h3>
+                    <StatusBadge isActive={user.isActive} />
+                  </div>
+                  <dl className="min-w-0 space-y-3 text-sm">
+                    <div className="min-w-0">
+                      <dt className="font-medium text-mesa-muted">Empleado</dt>
+                      <dd className="mt-1 wrap-anywhere">{user.employeeName === null ? 'Sin empleado' : user.employeeName}</dd>
+                    </div>
+                    {user.employeeName !== null && (
+                      <div className="min-w-0">
+                        <dt className="font-medium text-mesa-muted">Nómina</dt>
+                        <dd className="mt-1 tabular-nums wrap-anywhere">{user.payrollNumber}</dd>
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <dt className="font-medium text-mesa-muted">Roles</dt>
+                      <dd className="mt-1 wrap-anywhere">{user.roles.join(', ')}</dd>
+                    </div>
+                  </dl>
+                  <div className="border-t border-mesa-border pt-4">{renderStatusAction(user)}</div>
+                </li>
+              ))}
+            </ul>
+            <TableContainer label="Listado de usuarios" busy={users.isFetching} className="hidden md:block">
+              <table className="w-full min-w-180 table-fixed text-left text-sm">
+                <caption className="sr-only">Usuarios registrados y acciones para activar o desactivar su acceso</caption>
+                <thead className="border-b border-mesa-border bg-mesa-canvas text-mesa-muted">
+                  <tr>
+                    <th scope="col" className="w-[36%] px-4 py-3 font-semibold">Usuario / Empleado</th>
+                    <th scope="col" className="w-[24%] px-4 py-3 font-semibold">Rol</th>
+                    <th scope="col" className="w-[18%] px-4 py-3 font-semibold">Estado</th>
+                    <th scope="col" className="w-[22%] px-4 py-3 font-semibold">Acción</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-mesa-border">
+                  {users.data.map((user) => (
+                    <tr key={user.id} className="align-top">
+                      <th scope="row" className="px-4 py-4 wrap-anywhere">
+                        <p className="font-semibold">{user.userName}</p>
+                        <div className="mt-2 space-y-1 font-normal text-mesa-muted">
+                          {user.employeeName === null ? 'Sin empleado' : <><p>{user.employeeName}</p><p className="tabular-nums">Nómina: {user.payrollNumber}</p></>}
+                        </div>
+                      </th>
+                      <td className="px-4 py-4 wrap-anywhere">{user.roles.join(', ')}</td>
+                      <td className="px-4 py-4"><StatusBadge isActive={user.isActive} /></td>
+                      <td className="px-4 py-4">{renderStatusAction(user)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </TableContainer>
+          </>
         ))}
       </section>
     </section>
