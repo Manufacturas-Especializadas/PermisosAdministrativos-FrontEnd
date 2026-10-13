@@ -1,5 +1,10 @@
 import { isAxiosError } from 'axios'
 import { useRef, useState } from 'react'
+import Alert from '../components/Alert'
+import Button from '../components/Button'
+import ImportResult from '../components/ImportResult'
+import StatusBadge from '../components/StatusBadge'
+import TableContainer from '../components/TableContainer'
 import { useEmployees } from '../features/employees/hooks/useEmployees'
 import { useDebouncedValue } from '../features/employees/hooks/useDebouncedValue'
 import { useImportEmployees } from '../features/employees/hooks/useImportEmployees'
@@ -17,6 +22,7 @@ function getImportError(error: unknown): string {
 }
 
 export default function EmployeesPage() {
+  const [importOpen, setImportOpen] = useState(false)
   const importEmployees = useImportEmployees()
   const [file, setFile] = useState<File | null>(null)
   const [fileError, setFileError] = useState('')
@@ -92,220 +98,243 @@ export default function EmployeesPage() {
   }
 
   return (
-    <section aria-labelledby="employees-title" className="space-y-6">
-      <h1 id="employees-title" className="text-3xl font-semibold tracking-tight text-slate-950">
-        Empleados
-      </h1>
+    <section aria-labelledby="employees-title" className="min-w-0 space-y-6 text-mesa-text">
+      <header className="space-y-2">
+        <h1 id="employees-title" className="text-3xl font-semibold tracking-tight">Empleados</h1>
+        <p className="text-mesa-muted">Consulta empleados por nombre o número de nómina.</p>
+      </header>
 
-      <section aria-labelledby="import-employees-title" className="space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div>
-          <h2 id="import-employees-title" className="text-lg font-semibold text-slate-900">Importar empleados</h2>
-          <p className="mt-1 text-sm text-slate-600">Importa empleados desde un archivo Excel.</p>
-        </div>
-        <form onSubmit={(event) => { event.preventDefault(); void handleImport() }} aria-busy={importEmployees.isPending}>
-          <fieldset disabled={importEmployees.isPending} className="min-w-0 space-y-4">
-            <legend className="sr-only">Archivo de empleados</legend>
-            <div className="space-y-2">
-              <label htmlFor="employee-import-file" className="block text-sm font-medium text-slate-700">Archivo Excel</label>
-              <input
-                ref={fileInput}
-                id="employee-import-file"
-                type="file"
-                accept=".xlsx"
-                disabled={importEmployees.isPending}
-                aria-describedby="employee-import-help"
-                onChange={(event) => {
-                  setFile(event.target.files?.[0] ?? null)
-                  setFileError('')
-                  importEmployees.reset()
-                }}
-                className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 file:mr-3 file:rounded file:border-0 file:bg-slate-100 file:px-3 file:py-1 focus-visible:outline-2 focus-visible:outline-blue-700 disabled:cursor-not-allowed disabled:bg-slate-100"
-              />
-              <p id="employee-import-help" className="text-sm text-slate-500">Archivo .xlsx de hasta 5 MB. Columnas obligatorias: NumeroNomina, NombreCompleto y Departamento.</p>
-              {file && <p className="text-sm wrap-anywhere text-slate-600">Archivo seleccionado: {file.name}</p>}
-            </div>
-            <button
-              type="submit"
-              disabled={!file || importEmployees.isPending}
-              className="min-h-11 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-            >
-              {importEmployees.isPending ? 'Importando...' : 'Importar empleados'}
-            </button>
-          </fieldset>
-        </form>
-        {fileError && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{fileError}</p>}
-        {importEmployees.isError && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{getImportError(importEmployees.error)}</p>}
-        {importEmployees.isSuccess && (
-          <div className="space-y-3">
-            <div role="status" className="space-y-1 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-              <p className="font-medium">Importación completada.</p>
-              <p>Procesados: {importEmployees.data.processed}</p>
-              <p>Creados: {importEmployees.data.created}</p>
-              <p>Ignorados: {importEmployees.data.ignored}</p>
-            </div>
-            {importEmployees.data.errors.length > 0 && (
-              <div role="alert" className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                <p className="font-medium">Se encontraron errores en algunas filas:</p>
-                <ul className="mt-2 list-disc space-y-1 pl-5">
-                  {importEmployees.data.errors.map((message, index) => <li key={index} className="wrap-anywhere">{message}</li>)}
-                </ul>
-              </div>
-            )}
+      <section aria-label="Búsqueda y estado de empleados" className="min-w-0 rounded-xl border border-mesa-border bg-white p-4 md:p-5">
+        <div className="grid min-w-0 gap-4 md:grid-cols-[minmax(0,1fr)_minmax(9rem,12rem)_auto] md:items-end">
+          <div className="min-w-0 space-y-2">
+            <label htmlFor="employee-search" className="block text-sm font-semibold">Buscar empleado</label>
+            <input
+              id="employee-search"
+              type="search"
+              value={search}
+              aria-describedby="employee-search-help"
+              onChange={(event) => {
+                setSearch(event.target.value)
+                setPage(1)
+              }}
+              placeholder="Nombre o número de nómina..."
+              className="mesa-input min-w-0"
+            />
           </div>
-        )}
-      </section>
-
-      <div className="space-y-2">
-        <label
-          htmlFor="employee-search"
-          className="block text-sm font-medium text-slate-700"
-        >
-          Buscar empleado
-        </label>
-
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <input
-            id="employee-search"
-            type="search"
-            value={search}
-            onChange={(event) => {
-              setSearch(event.target.value)
-              setPage(1)
-            }}
-            placeholder="Nombre o número de nómina..."
-            className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 sm:max-w-md"
-          />
-
+          <div className="min-w-0 space-y-2">
+            <label htmlFor="employee-status" className="block text-sm font-semibold">Estado</label>
+            <select
+              id="employee-status"
+              value={statusFilter}
+              onChange={(event) => {
+                setStatusFilter(
+                  event.target.value as 'all' | 'active' | 'inactive',
+                )
+                setPage(1)
+              }}
+              className="mesa-input"
+            >
+              <option value="all">Todos</option>
+              <option value="active">Activos</option>
+              <option value="inactive">Inactivos</option>
+            </select>
+          </div>
           {search && (
-            <button
-              type="button"
+            <Button
+              variant="secondary"
               onClick={() => {
                 setSearch('')
                 setPage(1)
               }}
-              className="min-h-11 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
+              className="w-full md:w-auto"
             >
-              Limpiar
-            </button>
+              Limpiar búsqueda
+            </Button>
           )}
         </div>
+        <p id="employee-search-help" className="mt-3 text-sm text-mesa-muted">Escribe un nombre o número de nómina. Los resultados se actualizan mientras buscas.</p>
+      </section>
+
+      <div className="min-w-0 space-y-4">
+        <Button
+          variant="secondary"
+          aria-expanded={importOpen}
+          aria-controls="employee-import-panel"
+          onClick={() => setImportOpen((open) => !open)}
+          className="w-full md:w-auto"
+        >
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
+            <path d={importOpen ? 'm6 15 6-6 6 6' : 'm6 9 6 6 6-6'} />
+          </svg>
+          Importar empleados
+        </Button>
+        <section id="employee-import-panel" hidden={!importOpen} aria-labelledby="import-employees-title" className="min-w-0 space-y-4 rounded-xl border border-mesa-border bg-white p-4 md:p-5">
+          <div>
+            <h2 id="import-employees-title" className="text-lg font-semibold">Importación desde Excel</h2>
+            <p className="mt-1 text-sm text-mesa-muted">Importa empleados desde un archivo Excel.</p>
+          </div>
+          <form onSubmit={(event) => { event.preventDefault(); void handleImport() }} aria-busy={importEmployees.isPending}>
+            <fieldset disabled={importEmployees.isPending} className="min-w-0 space-y-4">
+              <legend className="sr-only">Archivo de empleados</legend>
+              <div className="min-w-0 space-y-2">
+                <label htmlFor="employee-import-file" className="block text-sm font-semibold">Archivo Excel</label>
+                <input
+                  ref={fileInput}
+                  id="employee-import-file"
+                  type="file"
+                  accept=".xlsx"
+                  disabled={importEmployees.isPending}
+                  aria-invalid={!!fileError}
+                  aria-describedby={`employee-import-help${fileError ? ' employee-import-error' : ''}`}
+                  onChange={(event) => {
+                    setFile(event.target.files?.[0] ?? null)
+                    setFileError('')
+                    importEmployees.reset()
+                  }}
+                  className="mesa-input min-w-0 max-w-full file:mr-3 file:rounded-md file:border-0 file:bg-mesa-canvas file:px-3 file:py-2 file:text-sm file:font-medium file:text-mesa-text"
+                />
+                <p id="employee-import-help" className="text-sm wrap-anywhere text-mesa-muted">Archivo .xlsx de hasta 5 MB. Columnas obligatorias: NumeroNomina, NombreCompleto y Departamento.</p>
+                {file && <p className="text-sm wrap-anywhere text-mesa-muted">Archivo seleccionado: {file.name}</p>}
+              </div>
+              <Button type="submit" disabled={!file || importEmployees.isPending} loading={importEmployees.isPending} loadingText="Importando..." className="w-full md:w-auto">
+                Importar empleados
+              </Button>
+            </fieldset>
+          </form>
+          <p role="status" className={importEmployees.isPending ? 'text-sm text-mesa-muted' : 'sr-only'}>
+            {importEmployees.isPending ? 'Importando empleados. Espera a que termine el proceso.' : ''}
+          </p>
+          {fileError && <Alert id="employee-import-error">{fileError}</Alert>}
+          {importEmployees.isError && <Alert>{getImportError(importEmployees.error)}</Alert>}
+          {importEmployees.isSuccess && <ImportResult {...importEmployees.data} />}
+        </section>
       </div>
 
-      <div className="space-y-2">
-        <label
-          htmlFor="employee-status"
-          className="block text-sm font-medium text-slate-700"
-        >
-          Estado
-        </label>
-
-        <select
-          id="employee-status"
-          value={statusFilter}
-          onChange={(event) => {
-            setStatusFilter(
-              event.target.value as 'all' | 'active' | 'inactive',
-            )
-            setPage(1)
-          }}
-          className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 sm:max-w-xs"
-        >
-          <option value="all">Todos</option>
-          <option value="active">Activos</option>
-          <option value="inactive">Inactivos</option>
-        </select>
-      </div>
-
-      <div className="min-h-6 text-sm text-slate-600" role="status" aria-live="polite">
-        {isFetching
-          ? debouncedSearch.trim()
-            ? 'Buscando empleados...'
-            : `Cargando empleados de la página ${page}...`
-          : isPending
-            ? 'Esperando conexión para cargar empleados...'
-            : data && !isError
-              ? `Mostrando ${data.items.length} de ${data.totalCount} empleados.`
-              : null}
-      </div>
-
-      {isPending ? (
-        <div className="min-h-40 rounded-xl border border-slate-200 bg-white" aria-busy="true" />
-      ) : isError ? (
-        <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          {sessionExpired
-            ? 'Tu sesión ha expirado. Vuelve a iniciar sesión para consultar los empleados.'
-            : 'No se pudieron cargar los empleados. Inténtalo de nuevo más tarde.'}
-        </p>
-      ) : data.items.length === 0 ? (
-        <p
-          role="status"
-          className="rounded-xl border border-slate-200 bg-white p-6 text-slate-600"
-        >
-          {debouncedSearch.trim()
-            ? 'No se encontraron empleados para esa búsqueda.'
-            : 'No hay empleados para mostrar.'}
-        </p>
-      ) : (
-        <div className="space-y-3">
-          <div
-            className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
-            role="region"
-            aria-label="Listado de empleados"
-            aria-busy={isFetching}
-            tabIndex={0}
-          >
-            <table className="w-full min-w-150 text-left text-sm">
-              <caption className="sr-only">Empleados: número de nómina, nombre, departamento y estado</caption>
-              <thead className="border-b border-slate-200 bg-slate-100 text-slate-700">
-                <tr>
-                  <th scope="col" className="px-4 py-3 font-semibold">Número de nómina</th>
-                  <th scope="col" className="px-4 py-3 font-semibold">Nombre</th>
-                  <th scope="col" className="px-4 py-3 font-semibold">Departamento</th>
-                  <th scope="col" className="px-4 py-3 font-semibold">Estado</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {data.items.map((employee) => (
-                  <tr key={employee.id}>
-                    <td className="px-4 py-3 wrap-anywhere text-slate-600">{employee.payrollNumber}</td>
-                    <th scope="row" className="px-4 py-3 font-medium wrap-anywhere text-slate-900">{employee.fullName}</th>
-                    <td className="px-4 py-3 wrap-anywhere text-slate-600">{employee.departmentName}</td>
-                    <td className="px-4 py-3 text-slate-600">{employee.isActive ? 'Activo' : 'Inactivo'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      <section aria-labelledby="employees-results-title" className="min-w-0 space-y-4">
+        <div className="space-y-1">
+          <h2 id="employees-results-title" className="text-lg font-semibold">Resultados</h2>
+          <div className="min-h-6 text-sm text-mesa-muted" role="status" aria-live="polite">
+            {isFetching
+              ? debouncedSearch.trim()
+                ? 'Buscando empleados...'
+                : `Cargando empleados de la página ${page}...`
+              : isPending
+                ? 'Esperando conexión para cargar empleados...'
+                : data && !isError
+                  ? `Mostrando ${data.items.length} de ${data.totalCount} empleados.`
+                  : null}
           </div>
         </div>
-      )}
 
-      <nav aria-label="Paginación de empleados" className="flex flex-wrap items-center justify-between gap-3">
-        <button
-          type="button"
-          disabled={!canGoPrevious}
-          onClick={() => {
-            if (canGoPrevious) setPage((currentPage) => Math.max(1, currentPage - 1))
-          }}
-          className="min-h-11 cursor-pointer rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
-        >
-          Anterior
-        </button>
-        <p className="text-sm text-slate-600">
-          {data && !isError
-            ? `Página ${data.totalPages === 0 ? 0 : data.page} de ${data.totalPages}`
-            : `Página ${page}`}
-        </p>
-        <button
-          type="button"
-          disabled={!canGoNext}
-          onClick={() => {
-            if (canGoNext && data) setPage((currentPage) => Math.min(data.totalPages, currentPage + 1))
-          }}
-          className="min-h-11 cursor-pointer rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
-        >
-          Siguiente
-        </button>
-      </nav>
+        {isPending ? (
+          <div className="flex min-h-40 items-center justify-center rounded-xl border border-mesa-border bg-white p-6 text-mesa-muted" aria-busy="true">
+            Preparando el listado de empleados...
+          </div>
+        ) : isError ? (
+          <Alert>
+            {sessionExpired
+              ? 'Tu sesión ha expirado. Vuelve a iniciar sesión para consultar los empleados.'
+              : 'No se pudieron cargar los empleados. Inténtalo de nuevo más tarde.'}
+          </Alert>
+        ) : data.items.length === 0 ? (
+          <div role="status" className="space-y-2 rounded-xl border border-mesa-border bg-white p-6">
+            <p className="font-semibold">
+              {debouncedSearch.trim()
+                ? statusFilter !== 'all'
+                  ? 'No encontramos empleados que coincidan con la búsqueda y el estado seleccionado.'
+                  : 'No encontramos empleados con esa búsqueda.'
+                : statusFilter !== 'all'
+                  ? `No hay empleados ${statusFilter === 'active' ? 'activos' : 'inactivos'} para mostrar.`
+                  : 'No hay empleados para mostrar.'}
+            </p>
+            {(debouncedSearch.trim() || statusFilter !== 'all') && (
+              <p className="text-sm text-mesa-muted">
+                {debouncedSearch.trim()
+                  ? statusFilter !== 'all'
+                    ? 'Prueba con otro nombre o número de nómina, o revisa el estado seleccionado.'
+                    : 'Prueba con otro nombre o número de nómina.'
+                  : 'Selecciona otro estado para consultar los empleados.'}
+              </p>
+            )}
+          </div>
+        ) : (
+          <>
+            <ul aria-label="Listado de empleados" aria-busy={isFetching} className="min-w-0 space-y-3 md:hidden">
+              {data.items.map((employee) => (
+                <li key={employee.id} className="min-w-0 space-y-4 rounded-xl border border-mesa-border bg-white p-4">
+                  <div className="space-y-2">
+                    <h3 className="text-lg leading-snug font-semibold wrap-anywhere">{employee.fullName}</h3>
+                    <dl className="space-y-2 text-sm">
+                      <div>
+                        <dt className="font-medium text-mesa-muted">Nómina</dt>
+                        <dd className="mt-0.5 tabular-nums wrap-anywhere">{employee.payrollNumber}</dd>
+                      </div>
+                      <div>
+                        <dt className="font-medium text-mesa-muted">Departamento</dt>
+                        <dd className="mt-0.5 wrap-anywhere">{employee.departmentName}</dd>
+                      </div>
+                    </dl>
+                  </div>
+                  <StatusBadge isActive={employee.isActive} />
+                </li>
+              ))}
+            </ul>
+            <TableContainer label="Listado de empleados" busy={isFetching} className="hidden md:block">
+              <table className="w-full min-w-150 table-fixed text-left text-sm">
+                <caption className="sr-only">Empleados: nombre, número de nómina, departamento y estado</caption>
+                <thead className="border-b border-mesa-border bg-mesa-canvas text-mesa-muted">
+                  <tr>
+                    <th scope="col" className="w-[32%] px-4 py-3 font-semibold">Empleado</th>
+                    <th scope="col" className="w-[18%] px-4 py-3 font-semibold">Nómina</th>
+                    <th scope="col" className="w-[30%] px-4 py-3 font-semibold">Departamento</th>
+                    <th scope="col" className="w-[20%] px-4 py-3 font-semibold">Estado</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-mesa-border">
+                  {data.items.map((employee) => (
+                    <tr key={employee.id} className="align-top">
+                      <th scope="row" className="px-4 py-4 font-semibold wrap-anywhere">{employee.fullName}</th>
+                      <td className="px-4 py-4 tabular-nums wrap-anywhere text-mesa-muted">{employee.payrollNumber}</td>
+                      <td className="px-4 py-4 wrap-anywhere text-mesa-muted">{employee.departmentName}</td>
+                      <td className="px-4 py-4"><StatusBadge isActive={employee.isActive} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </TableContainer>
+          </>
+        )}
+
+        <nav aria-label="Paginación de empleados" className="grid grid-cols-2 items-center gap-3 md:grid-cols-[auto_1fr_auto]">
+          <Button
+            variant="secondary"
+            disabled={!canGoPrevious}
+            onClick={() => {
+              if (canGoPrevious) setPage((currentPage) => Math.max(1, currentPage - 1))
+            }}
+            className="row-start-2 md:row-start-1"
+          >
+            Anterior
+          </Button>
+          <p className="col-span-2 col-start-1 row-start-1 text-center text-sm text-mesa-muted md:col-span-1 md:col-start-2">
+            {data && !isError
+              ? data.totalPages === 0
+                ? 'Sin páginas para mostrar'
+                : `Página ${data.page} de ${data.totalPages}`
+              : `Página ${page}`}
+          </p>
+          <Button
+            variant="secondary"
+            disabled={!canGoNext}
+            onClick={() => {
+              if (canGoNext && data) setPage((currentPage) => Math.min(data.totalPages, currentPage + 1))
+            }}
+            className="row-start-2 md:col-start-3 md:row-start-1"
+          >
+            Siguiente
+          </Button>
+        </nav>
+      </section>
     </section>
   )
 }
