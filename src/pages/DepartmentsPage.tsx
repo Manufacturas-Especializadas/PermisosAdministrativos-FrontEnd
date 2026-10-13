@@ -1,10 +1,12 @@
 import { isAxiosError } from 'axios'
+import Alert from '../components/Alert'
+import Button from '../components/Button'
+import StatusBadge from '../components/StatusBadge'
+import TableContainer from '../components/TableContainer'
 import ImportDepartments from '../features/departments/components/ImportDepartments'
 import { useRef, useState } from 'react'
 import { useCreateDepartment } from '../features/departments/hooks/useCreateDepartment'
 import { useDepartments } from '../features/departments/hooks/useDepartments'
-
-const errorClass = 'rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800'
 
 function getCreationError(error: unknown): string {
   if (isAxiosError<{ detail?: unknown; title?: unknown }>(error)) {
@@ -19,6 +21,8 @@ function getCreationError(error: unknown): string {
 }
 
 export default function DepartmentsPage() {
+  const [createOpen, setCreateOpen] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
   const departments = useDepartments()
   const createDepartment = useCreateDepartment()
   const [name, setName] = useState('')
@@ -50,15 +54,39 @@ export default function DepartmentsPage() {
   }
 
   return (
-    <section aria-labelledby="departments-title" className="space-y-6">
-      <div>
-        <h1 id="departments-title" className="text-3xl font-semibold tracking-tight text-slate-950">Departamentos</h1>
-        <p className="mt-1 text-sm text-slate-600">Administra los departamentos utilizados por los empleados.</p>
+    <section aria-labelledby="departments-title" className="min-w-0 space-y-6 text-mesa-text">
+      <header className="space-y-2">
+        <h1 id="departments-title" className="text-3xl font-semibold tracking-tight">Departamentos</h1>
+        <p className="text-mesa-muted">Administra los departamentos utilizados por los empleados.</p>
+      </header>
+
+      <div className="flex min-w-0 flex-col gap-3 md:flex-row md:flex-wrap">
+        <Button
+          aria-expanded={createOpen}
+          aria-controls="create-department-panel"
+          onClick={() => setCreateOpen((open) => !open)}
+        >
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
+            <path d={createOpen ? 'm6 15 6-6 6 6' : 'M12 5v14M5 12h14'} />
+          </svg>
+          Crear departamento
+        </Button>
+        <Button
+          variant="secondary"
+          aria-expanded={importOpen}
+          aria-controls="import-departments-panel"
+          onClick={() => setImportOpen((open) => !open)}
+        >
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
+            <path d={importOpen ? 'm6 15 6-6 6 6' : 'm6 9 6 6 6-6'} />
+          </svg>
+          Importar departamentos
+        </Button>
       </div>
 
-      <ImportDepartments />
-
       <form
+        id="create-department-panel"
+        hidden={!createOpen}
         noValidate
         onSubmit={(event) => {
           event.preventDefault()
@@ -66,13 +94,13 @@ export default function DepartmentsPage() {
         }}
         aria-labelledby="create-department-title"
         aria-busy={createDepartment.isPending}
-        className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+        className="min-w-0 space-y-4 rounded-xl border border-mesa-border bg-white p-4 md:p-6"
       >
-        <h2 id="create-department-title" className="mb-5 text-lg font-semibold text-slate-900">Crear departamento</h2>
-        <fieldset disabled={createDepartment.isPending} className="min-w-0 space-y-5">
+        <h2 id="create-department-title" className="text-lg font-semibold">Crear departamento</h2>
+        <fieldset disabled={createDepartment.isPending} className="min-w-0 space-y-4">
           <legend className="sr-only">Datos del departamento</legend>
-          <div className="space-y-2">
-            <label htmlFor="department-name" className="block text-sm font-medium text-slate-700">Nombre del departamento</label>
+          <div className="min-w-0 space-y-2 md:max-w-xl">
+            <label htmlFor="department-name" className="block text-sm font-medium">Nombre del departamento</label>
             <input
               id="department-name"
               required
@@ -81,62 +109,72 @@ export default function DepartmentsPage() {
               onChange={(event) => setName(event.target.value)}
               aria-invalid={!!validationError}
               aria-describedby={validationError ? 'department-name-help department-name-error' : 'department-name-help'}
-              className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+              className="mesa-input min-w-0"
             />
-            <p id="department-name-help" className="text-sm text-slate-500">Máximo 100 caracteres.</p>
+            <p id="department-name-help" className="text-sm text-mesa-muted">Máximo 100 caracteres.</p>
           </div>
-          {validationError && <p id="department-name-error" role="alert" className={errorClass}>{validationError}</p>}
-          {createDepartment.isError && <p role="alert" className={errorClass}>{getCreationError(createDepartment.error)}</p>}
-          {createDepartment.isSuccess && (
-            <p role="status" className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">Departamento creado correctamente.</p>
-          )}
-          <div className="flex justify-end border-t border-slate-200 pt-5">
-            <button
-              type="submit"
-              disabled={createDepartment.isPending}
-              className="min-h-11 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-            >
+          {validationError && <Alert id="department-name-error">{validationError}</Alert>}
+          {createDepartment.isError && <Alert>{getCreationError(createDepartment.error)}</Alert>}
+          {createDepartment.isSuccess && <Alert variant="success">Departamento creado correctamente.</Alert>}
+          <div className="border-t border-mesa-border pt-4">
+            <Button type="submit" disabled={createDepartment.isPending} loading={createDepartment.isPending} className="w-full md:w-auto">
               {createDepartment.isPending ? 'Creando...' : 'Crear departamento'}
-            </button>
+            </Button>
           </div>
         </fieldset>
+        <p role="status" className="sr-only">{createDepartment.isPending ? 'Creando departamento...' : ''}</p>
       </form>
 
-      <section aria-labelledby="registered-departments-title" className="space-y-4">
-        <h2 id="registered-departments-title" className="text-lg font-semibold text-slate-900">Departamentos registrados</h2>
-        {departments.isPending && <p role="status" className="text-sm text-slate-600">Cargando departamentos...</p>}
-        {departments.isError && (
-          <p role="alert" className={errorClass}>
-            {sessionExpired ? 'Tu sesión ha expirado. Vuelve a iniciar sesión.' : 'No se pudieron cargar los departamentos. Inténtalo nuevamente.'}
+      <div id="import-departments-panel" hidden={!importOpen}>
+        <ImportDepartments />
+      </div>
+
+      <section aria-labelledby="registered-departments-title" className="min-w-0 space-y-4">
+        <div className="space-y-1">
+          <h2 id="registered-departments-title" className="text-lg font-semibold">Departamentos registrados</h2>
+          <p role="status" className="text-sm text-mesa-muted">
+            {!departments.isPending && departments.isFetching ? 'Actualizando departamentos...' : ''}
           </p>
+        </div>
+        {departments.isPending && <p role="status" className="rounded-xl border border-mesa-border bg-white p-6 text-mesa-muted">Cargando departamentos...</p>}
+        {departments.isError && (
+          <Alert>
+            <p>{sessionExpired ? 'Tu sesión ha expirado. Vuelve a iniciar sesión.' : 'No se pudieron cargar los departamentos. Inténtalo nuevamente.'}</p>
+            {!sessionExpired && !!departments.data?.length && <p className="mt-2">Los datos mostrados corresponden a la última consulta correcta y existe un problema actualizando la información.</p>}
+          </Alert>
         )}
         {!departments.isPending && !sessionExpired && departments.data && (departments.data.length === 0 ? (
-          <p role="status" className="rounded-xl border border-slate-200 bg-white p-6 text-slate-600">No hay departamentos registrados.</p>
+          <p role="status" className="rounded-xl border border-mesa-border bg-white p-6 text-mesa-muted">No hay departamentos registrados.</p>
         ) : (
-          <div
-            role="region"
-            aria-label="Listado de departamentos"
-            tabIndex={0}
-            className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
-          >
-            <table className="w-full min-w-96 text-left text-sm">
-              <caption className="sr-only">Nombre y estado de los departamentos registrados</caption>
-              <thead className="border-b border-slate-200 bg-slate-100 text-slate-700">
-                <tr>
-                  <th scope="col" className="px-4 py-3 font-semibold">Nombre</th>
-                  <th scope="col" className="px-4 py-3 font-semibold">Estado</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {departments.data.map((department) => (
-                  <tr key={department.id}>
-                    <th scope="row" className="px-4 py-3 font-medium wrap-anywhere text-slate-900">{department.name}</th>
-                    <td className="px-4 py-3 text-slate-600">{department.isActive ? 'Activo' : 'Inactivo'}</td>
+          <>
+            <ul aria-label="Listado de departamentos" aria-busy={departments.isFetching} className="min-w-0 space-y-3 md:hidden">
+              {departments.data.map((department) => (
+                <li key={department.id} className="min-w-0 space-y-3 rounded-xl border border-mesa-border bg-white p-4">
+                  <h3 className="text-lg leading-snug font-semibold wrap-anywhere">{department.name}</h3>
+                  <StatusBadge isActive={department.isActive} />
+                </li>
+              ))}
+            </ul>
+            <TableContainer label="Listado de departamentos" busy={departments.isFetching} className="hidden md:block">
+              <table className="w-full min-w-96 table-fixed text-left text-sm">
+                <caption className="sr-only">Nombre y estado de los departamentos registrados</caption>
+                <thead className="border-b border-mesa-border bg-mesa-canvas text-mesa-muted">
+                  <tr>
+                    <th scope="col" className="w-[70%] px-4 py-3 font-semibold">Departamento</th>
+                    <th scope="col" className="w-[30%] px-4 py-3 font-semibold">Estado</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-mesa-border">
+                  {departments.data.map((department) => (
+                    <tr key={department.id} className="align-top">
+                      <th scope="row" className="px-4 py-4 font-semibold wrap-anywhere">{department.name}</th>
+                      <td className="px-4 py-4"><StatusBadge isActive={department.isActive} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </TableContainer>
+          </>
         ))}
       </section>
     </section>
