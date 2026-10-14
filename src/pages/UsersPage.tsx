@@ -45,10 +45,8 @@ export default function UsersPage() {
     const errors: string[] = []
     if (!userName.trim()) errors.push('Ingresa el nombre de usuario.')
     else if (userName.trim().length < 4) errors.push('El nombre de usuario debe tener al menos 4 caracteres.')
-    if (password.length < 8) errors.push('La contraseña debe tener al menos 8 caracteres.')
-    if (!/[A-Z]/.test(password)) errors.push('La contraseña debe incluir al menos una mayúscula.')
-    if (!/[a-z]/.test(password)) errors.push('La contraseña debe incluir al menos una minúscula.')
-    if (!/[0-9]/.test(password)) errors.push('La contraseña debe incluir al menos un número.')
+    if (password.length < 4) errors.push('La contraseña debe tener al menos 4 caracteres.')
+
     if (!roles.includes(role)) errors.push('Selecciona un rol.')
     if (associateEmployee && !selectedEmployee) errors.push('Selecciona un empleado o elige "Sin empleado asociado".')
     setValidationErrors(errors)
@@ -149,8 +147,8 @@ export default function UsersPage() {
                 </div>
                 <div className="min-w-0 space-y-2">
                   <label htmlFor="user-password" className="block text-sm font-medium">Contraseña</label>
-                  <input id="user-password" type="password" required minLength={8} autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} aria-describedby="password-help" className="mesa-input min-w-0" />
-                  <p id="password-help" className="text-sm leading-relaxed text-mesa-muted">Mínimo 8 caracteres, una mayúscula, una minúscula y un número. No requiere carácter especial.</p>
+                  <input id="user-password" type="password" required minLength={4} autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} aria-describedby="password-help" className="mesa-input min-w-0" />
+                  <p id="password-help" className="text-sm leading-relaxed text-mesa-muted">Mínimo 4 caracteres, una mayúscula, una minúscula y un número. No requiere carácter especial.</p>
                 </div>
               </div>
             </section>

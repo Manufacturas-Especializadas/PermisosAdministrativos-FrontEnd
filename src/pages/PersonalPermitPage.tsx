@@ -1,5 +1,7 @@
 import { isAxiosError } from 'axios'
 import { useState } from 'react'
+import Alert from '../components/Alert'
+import Button from '../components/Button'
 import type { Employee } from '../features/employees/employees.types'
 import { EmployeeSelector } from '../features/employees/components/EmployeeSelector'
 import type { PersonalPermitType } from '../features/personalPermits/personalPermit.types'
@@ -58,17 +60,17 @@ export default function PersonalPermitPage() {
     return (
         <section
             aria-labelledby="personal-permit-title"
-            className="mx-auto max-w-3xl space-y-6"
+            className="mx-auto min-w-0 max-w-3xl space-y-6 text-mesa-text"
         >
             <div>
                 <h1
                     id="personal-permit-title"
-                    className="text-3xl font-semibold tracking-tight text-slate-950"
+                    className="text-2xl font-semibold tracking-tight text-mesa-text sm:text-3xl"
                 >
-                    PERMISO PERSONAL
+                    Registrar permiso
                 </h1>
 
-                <p className="mt-1 text-sm text-slate-600">
+                <p className="mt-2 text-base leading-relaxed text-mesa-muted">
                     Registra un permiso de salida para un empleado.
                 </p>
             </div>
@@ -79,62 +81,23 @@ export default function PersonalPermitPage() {
                     void handleSubmit()
                 }}
                 aria-busy={createPermit.isPending}
-                className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+                className="min-w-0 rounded-xl border border-mesa-border bg-white p-4 shadow-sm sm:p-6"
             >
                 <fieldset disabled={createPermit.isPending} className="min-w-0 space-y-5">
                     <legend className="sr-only">Datos del permiso personal</legend>
-                    <EmployeeSelector
-                        selectedEmployee={selectedEmployee}
-                        onSelect={setSelectedEmployee}
-                        onClear={() => setSelectedEmployee(null)}
-                    />
-
-                    <div className="grid gap-5 sm:grid-cols-2">
-                        <div className="space-y-2">
-                            <label
-                                htmlFor="permit-date"
-                                className="block text-sm font-medium text-slate-700"
-                            >
-                                Fecha
-                            </label>
-
-                            <input
-                                id="permit-date"
-                                type="date"
-                                required
-                                value={permitDate}
-                                onChange={(event) =>
-                                    setPermitDate(event.target.value)
-                                }
-                                className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label
-                                htmlFor="exit-time"
-                                className="block text-sm font-medium text-slate-700"
-                            >
-                                Hora de salida
-                            </label>
-
-                            <input
-                                id="exit-time"
-                                type="time"
-                                required
-                                value={exitTime}
-                                onChange={(event) =>
-                                    setExitTime(event.target.value)
-                                }
-                                className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                            />
-                        </div>
+                    {/* Estos ajustes visuales afectan únicamente a esta instancia del selector. */}
+                    <div className="min-w-0 w-full wrap-anywhere [&_label]:text-mesa-text [&_p]:text-mesa-muted [&_p.font-medium]:text-mesa-text [&_[role=alert]]:text-mesa-error [&_input]:min-h-12 [&_input]:min-w-0 [&_input]:max-w-full [&_input]:border-slate-400 [&_input]:text-base [&_input]:text-mesa-text [&_input]:placeholder:text-mesa-muted [&_input:focus]:border-mesa-primary [&_input:focus]:ring-0 [&_input:focus-visible]:outline-solid [&_input:focus-visible]:outline-2 [&_input:focus-visible]:outline-offset-2 [&_input:focus-visible]:outline-mesa-primary [&_button]:min-h-12 [&_button]:whitespace-normal [&_button]:focus-visible:relative [&_button]:focus-visible:outline-solid [&_button]:focus-visible:outline-2 [&_button]:focus-visible:outline-offset-2 [&_button]:focus-visible:outline-mesa-primary [&_button.shrink-0]:px-2 [&_button.shrink-0]:text-mesa-primary [&_button.shrink-0]:hover:text-mesa-hover [&_.overflow-hidden]:overflow-visible [&_.items-start]:flex-wrap sm:[&_.items-start]:flex-nowrap">
+                        <EmployeeSelector
+                            selectedEmployee={selectedEmployee}
+                            onSelect={setSelectedEmployee}
+                            onClear={() => setSelectedEmployee(null)}
+                        />
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="min-w-0 space-y-2">
                         <label
                             htmlFor="permit-type"
-                            className="block text-sm font-medium text-slate-700"
+                            className="block text-sm font-semibold text-mesa-text"
                         >
                             Tipo de permiso
                         </label>
@@ -152,7 +115,7 @@ export default function PersonalPermitPage() {
                                         : (Number(value) as PersonalPermitType),
                                 )
                             }}
-                            className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                            className="mesa-input min-w-0 max-w-full"
                         >
                             <option value="">Selecciona un tipo</option>
 
@@ -164,10 +127,52 @@ export default function PersonalPermitPage() {
                         </select>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="grid min-w-0 gap-5 sm:grid-cols-2">
+                        <div className="min-w-0 space-y-2">
+                            <label
+                                htmlFor="permit-date"
+                                className="block text-sm font-semibold text-mesa-text"
+                            >
+                                Fecha
+                            </label>
+
+                            <input
+                                id="permit-date"
+                                type="date"
+                                required
+                                value={permitDate}
+                                onChange={(event) =>
+                                    setPermitDate(event.target.value)
+                                }
+                                className="mesa-input min-w-0 max-w-full"
+                            />
+                        </div>
+
+                        <div className="min-w-0 space-y-2">
+                            <label
+                                htmlFor="exit-time"
+                                className="block text-sm font-semibold text-mesa-text"
+                            >
+                                Hora de salida
+                            </label>
+
+                            <input
+                                id="exit-time"
+                                type="time"
+                                required
+                                value={exitTime}
+                                onChange={(event) =>
+                                    setExitTime(event.target.value)
+                                }
+                                className="mesa-input min-w-0 max-w-full"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="min-w-0 space-y-2">
                         <label
                             htmlFor="permit-reason"
-                            className="block text-sm font-medium text-slate-700"
+                            className="block text-sm font-semibold text-mesa-text"
                         >
                             Motivo
                         </label>
@@ -181,35 +186,31 @@ export default function PersonalPermitPage() {
                             onChange={(event) => setReason(event.target.value)}
                             rows={4}
                             placeholder="Describe brevemente el motivo..."
-                            className="w-full resize-y rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                            className="mesa-input min-w-0 max-w-full resize-y leading-relaxed placeholder:text-mesa-muted"
                         />
-                        <p id="permit-reason-help" className="text-sm text-slate-500">
+                        <p id="permit-reason-help" className="text-sm text-mesa-muted">
                             Máximo 500 caracteres.
                         </p>
                     </div>
 
                     {createPermit.isSuccess && (
-                        <p
-                            role="status"
-                            className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800"
-                        >
+                        <Alert variant="success" role="status">
                             El permiso se registró correctamente y quedó pendiente
                             de aprobación por RH.
-                        </p>
+                        </Alert>
                     )}
 
                     {createPermit.isError && (
-                        <p
-                            role="alert"
-                            className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
-                        >
+                        <Alert variant="error" role="alert">
                             {errorMessage}
-                        </p>
+                        </Alert>
                     )}
 
-                    <div className="flex justify-end border-t border-slate-200 pt-5">
-                        <button
+                    <div className="flex justify-end border-t border-mesa-border pt-5">
+                        <Button
                             type="submit"
+                            loading={createPermit.isPending}
+                            loadingText="Registrando..."
                             disabled={
                                 createPermit.isPending ||
                                 !selectedEmployee ||
@@ -218,12 +219,10 @@ export default function PersonalPermitPage() {
                                 permitType === null ||
                                 !reason.trim()
                             }
-                            className="min-h-11 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                            className="w-full sm:w-auto"
                         >
-                            {createPermit.isPending
-                                ? 'Registrando...'
-                                : 'Registrar permiso'}
-                        </button>
+                            Registrar permiso
+                        </Button>
                     </div>
                 </fieldset>
             </form>
