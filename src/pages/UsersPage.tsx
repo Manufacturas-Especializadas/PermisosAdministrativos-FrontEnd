@@ -9,6 +9,7 @@ import type { Employee } from '../features/employees/employees.types'
 import { useCreateUser } from '../features/users/hooks/useCreateUser'
 import { useSetUserStatus } from '../features/users/hooks/useSetUserStatus'
 import { useUsers } from '../features/users/hooks/useUsers'
+import ImportUsers from '../features/users/components/ImportUsers'
 import type { User } from '../features/users/users.types'
 
 const roles = ['Administrator', 'Supervisor', 'HumanResources', 'Security']
@@ -195,6 +196,8 @@ export default function UsersPage() {
           </fieldset>
         </form>
       </div>
+
+      <ImportUsers />
 
       <section aria-labelledby="registered-users-title" className="min-w-0 space-y-4">
         <div className="space-y-1">

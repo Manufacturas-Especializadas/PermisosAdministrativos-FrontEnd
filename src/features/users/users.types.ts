@@ -18,3 +18,10 @@ export interface CreateUserRequest {
 export interface SetUserStatusRequest {
   isActive: boolean
 }
+
+export interface UserImportResult {
+  processed: number
+  created: number
+  ignored: number
+  errors: string[]
+}
