@@ -11,10 +11,11 @@ import {
     getCurrentUser,
     login as loginRequest,
     logout as logoutRequest,
+    changePassword as changePasswordRequest,
 } from './authApi'
 
 import type { AuthUser } from './auth.types'
-import type { LoginRequest } from './authApi'
+import type { LoginRequest, ChangePasswordRequest } from './authApi'
 import { registerUnauthorizedHandler } from '../api/http'
 import { queryClient } from '../api/queryClient'
 import { clearCsrfToken, fetchCsrfToken } from '../api/csrf'
@@ -24,6 +25,7 @@ interface AuthContextValue {
     isLoading: boolean
     isAuthenticated: boolean
     login: (request: LoginRequest) => Promise<void>
+    changePassword: (request: ChangePasswordRequest) => Promise<void>
     logout: () => Promise<void>
 }
 
@@ -91,6 +93,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
     }
 
+    const changePassword = async (request: ChangePasswordRequest) => {
+        await changePasswordRequest(request)
+
+        const currentUser = await getCurrentUser()
+        setUser(currentUser)
+    }
+
     const logout = async () => {
         await logoutRequest()
         setUser(null)
@@ -105,6 +114,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 isLoading,
                 isAuthenticated: user !== null,
                 login,
+                changePassword,
                 logout,
             }}
         >
