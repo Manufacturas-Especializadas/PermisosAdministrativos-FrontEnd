@@ -12,12 +12,23 @@ import PendingPermitsPage from './pages/PendingPermitsPage'
 import PersonalPermitHistoryPage from './pages/PersonalPermitHistoryPage'
 import PersonalPermitPage from './pages/PersonalPermitPage'
 import UsersPage from './pages/UsersPage'
+import ChangePasswordPage from './pages/ChangePasswordPage'
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+
+        <Route
+          path="/change-password"
+          element={
+            <ProtectedRoute allowPasswordChange>
+              <ChangePasswordPage />
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           element={
             <ProtectedRoute>

@@ -148,7 +148,10 @@ export default function UsersPage() {
                 <div className="min-w-0 space-y-2">
                   <label htmlFor="user-password" className="block text-sm font-medium">Contraseña</label>
                   <input id="user-password" type="password" required minLength={4} autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} aria-describedby="password-help" className="mesa-input min-w-0" />
-                  <p id="password-help" className="text-sm leading-relaxed text-mesa-muted">Mínimo 4 caracteres, una mayúscula, una minúscula y un número. No requiere carácter especial.</p>
+                  <p id="password-help" className="text-sm leading-relaxed text-mesa-muted">
+                    Entre 4 y 64 caracteres. No necesitas mayúsculas, minúsculas,
+                    números ni caracteres especiales.
+                  </p>
                 </div>
               </div>
             </section>

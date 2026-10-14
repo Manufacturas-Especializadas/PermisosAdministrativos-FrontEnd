@@ -1,13 +1,18 @@
 import type { ReactNode } from 'react'
-import { Navigate } from 'react-router'
+import { Navigate, useLocation } from 'react-router'
 import { useAuth } from '../auth/AuthContext'
 
 interface ProtectedRouteProps {
   children: ReactNode
+  allowPasswordChange?: boolean
 }
 
-export default function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isLoading, isAuthenticated } = useAuth()
+export default function ProtectedRoute({
+  children,
+  allowPasswordChange = false,
+}: ProtectedRouteProps) {
+  const { isLoading, isAuthenticated, user } = useAuth()
+  const location = useLocation()
 
   if (isLoading) {
     return (
@@ -19,6 +24,13 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
+  }
+
+  if (
+    user?.mustChangePassword &&
+    !allowPasswordChange
+  ) {
+    return <Navigate to="/change-password" replace state={{ from: location.pathname }} />
   }
 
   return children
