@@ -64,7 +64,7 @@ export default function MobileNavigation({ open, onClose, items, children }: Mob
         </div>
         <p id="mobile-navigation-title" className="mb-4 text-lg font-semibold">Permisos Administrativos</p>
         <AppNavigation items={items} onNavigate={onClose} />
-        <div className="mt-auto border-t border-mesa-border pt-4">
+        <div className="mt-auto border-t border-mesa-border pt-5 pb-2">
           {children}
         </div>
       </div>

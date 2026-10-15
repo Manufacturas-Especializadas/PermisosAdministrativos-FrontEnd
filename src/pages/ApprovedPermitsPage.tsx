@@ -2,7 +2,11 @@ import { isAxiosError } from 'axios'
 import { useRef, useState } from 'react'
 import Alert from '../components/Alert'
 import Button from '../components/Button'
+import ConfirmationDialog from '../components/ConfirmationDialog'
+import { useToast } from '../components/useToast'
 import TableContainer from '../components/TableContainer'
+import EmptyState from '../components/EmptyState'
+import { Spinner } from '../components/LoadingState'
 import { useApprovedPersonalPermits } from '../features/personalPermits/hooks/useApprovedPersonalPermits'
 import { useCompletePersonalPermit } from '../features/personalPermits/hooks/useCompletePersonalPermit'
 import { getPersonalPermitReviewError } from '../features/personalPermits/personalPermit.errors'
@@ -12,6 +16,8 @@ import type { ApprovedPersonalPermit } from '../features/personalPermits/persona
 export default function ApprovedPermitsPage() {
   const { data, isPending, isFetching, isError, error } = useApprovedPersonalPermits()
   const completePermit = useCompletePersonalPermit()
+  const notify = useToast()
+  const [selectedPermit, setSelectedPermit] = useState<ApprovedPersonalPermit | null>(null)
   const [processing, setProcessing] = useState<Partial<Record<number, boolean>>>({})
   const [completionErrors, setCompletionErrors] = useState<Partial<Record<number, string>>>({})
   // Mantiene el bloqueo por permiso incluso con varias peticiones simultáneas.
@@ -19,7 +25,7 @@ export default function ApprovedPermitsPage() {
   const sessionExpired = isAxiosError(error) && error.response?.status === 401
 
   async function registerExit(permit: ApprovedPersonalPermit) {
-    if (processingIds.current.has(permit.id)) return
+    if (processingIds.current.has(permit.id)) return false
 
     processingIds.current.add(permit.id)
     setProcessing((current) => ({ ...current, [permit.id]: true }))
@@ -31,12 +37,15 @@ export default function ApprovedPermitsPage() {
 
     try {
       await completePermit.mutateAsync(permit.id)
+      notify('Salida registrada correctamente.')
+      return true
     } catch (completionError) {
       const message = getPersonalPermitReviewError(completionError, 'complete')
       setCompletionErrors((current) => ({
         ...current,
         [permit.id]: `${permit.employeeName} (nómina ${permit.payrollNumber}): ${message}`,
       }))
+      return false
     } finally {
       processingIds.current.delete(permit.id)
       setProcessing((current) => {
@@ -53,10 +62,10 @@ export default function ApprovedPermitsPage() {
 
   return (
     <section aria-labelledby="approved-permits-title" className="min-w-0 space-y-6">
-      <div>
+      <div className="mesa-page-header">
         <h1
           id="approved-permits-title"
-          className="text-3xl font-semibold tracking-tight text-mesa-text"
+          className="mesa-page-title"
         >
           Salidas autorizadas
         </h1>
@@ -70,14 +79,15 @@ export default function ApprovedPermitsPage() {
 
       <section aria-labelledby="approved-results-title" className="min-w-0 space-y-4">
         <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:justify-between">
-          <h2 id="approved-results-title" className="text-xl font-semibold text-mesa-text">Resultados</h2>
+          <h2 id="approved-results-title" className="text-lg font-semibold text-mesa-text">Resultados</h2>
           <div
             className={isPending
-              ? 'flex min-h-40 w-full items-center rounded-xl border border-mesa-border bg-white p-6 text-sm text-mesa-muted'
-              : 'text-sm text-mesa-muted'}
+              ? 'mesa-card flex min-h-40 w-full items-center justify-center gap-3 text-sm text-mesa-muted'
+              : 'flex items-center gap-2 text-sm text-mesa-muted'}
             role="status"
             aria-live="polite"
           >
+            {(isFetching || isPending) && <Spinner />}
             {isFetching
               ? isPending
                 ? 'Cargando salidas autorizadas...'
@@ -97,9 +107,9 @@ export default function ApprovedPermitsPage() {
         )}
 
         {isPending ? null : !data || sessionExpired ? null : data.length === 0 ? (
-          <p role="status" className="rounded-xl border border-mesa-border bg-white p-6 text-mesa-muted">
+          <EmptyState>
             No hay permisos aprobados para registrar salidas hoy.
-          </p>
+          </EmptyState>
         ) : (
           <>
             <ul className="space-y-4 md:hidden" aria-label="Listado de salidas autorizadas" aria-busy={isFetching}>
@@ -133,7 +143,7 @@ export default function ApprovedPermitsPage() {
                     loading={!!processing[permit.id]}
                     loadingText="Registrando..."
                     disabled={!!processing[permit.id]}
-                    onClick={() => void registerExit(permit)}
+                    onClick={() => setSelectedPermit(permit)}
                     className="w-full"
                   >
                     Registrar salida
@@ -185,7 +195,7 @@ export default function ApprovedPermitsPage() {
                           loading={!!processing[permit.id]}
                           loadingText="Registrando..."
                           disabled={!!processing[permit.id]}
-                          onClick={() => void registerExit(permit)}
+                          onClick={() => setSelectedPermit(permit)}
                           className="whitespace-nowrap"
                         >
                           Registrar salida
@@ -214,6 +224,18 @@ export default function ApprovedPermitsPage() {
             <Alert key={permitId}>{message}</Alert>
           ))}
         </section>
+      )}
+      {selectedPermit && (
+        <ConfirmationDialog
+          title="¿Registrar salida?"
+          description={<>Confirma que <strong>{selectedPermit.employeeName}</strong>, nómina {selectedPermit.payrollNumber}, está registrando su salida. Permiso del {formatPermitDate(selectedPermit.permitDate)} a las {selectedPermit.exitTime.slice(0, 5)}.</>}
+          confirmText="Registrar salida"
+          loadingText="Registrando..."
+          onCancel={() => setSelectedPermit(null)}
+          onConfirm={() => registerExit(selectedPermit)}
+        >
+          {completionErrors[selectedPermit.id] && <Alert>{completionErrors[selectedPermit.id]}</Alert>}
+        </ConfirmationDialog>
       )}
     </section>
   )

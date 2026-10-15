@@ -1,5 +1,8 @@
 import { useState } from 'react'
 import type { Employee } from '../employees.types'
+import Alert from '../../../components/Alert'
+import LoadingState from '../../../components/LoadingState'
+import EmptyState from '../../../components/EmptyState'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import { useEmployeeSearch } from '../hooks/useEmployeeSearch'
 
@@ -27,12 +30,12 @@ export function EmployeeSelector({
     if (selectedEmployee) {
         return (
             <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-700">
+                <p className="text-sm font-semibold text-mesa-text">
                     Empleado
-                </label>
+                </p>
 
-                <div className="rounded-lg border border-slate-300 bg-slate-50 p-4">
-                    <div className="flex items-start justify-between gap-4">
+                <div className="rounded-lg border border-sky-200 bg-sky-50/50 p-4 wrap-anywhere">
+                    <div className="flex flex-wrap items-start justify-between gap-3 sm:flex-nowrap">
                         <div className="min-w-0">
                             <p className="font-medium text-slate-900">
                                 {selectedEmployee.fullName}
@@ -50,7 +53,7 @@ export function EmployeeSelector({
                         <button
                             type="button"
                             onClick={onClear}
-                            className="shrink-0 text-sm font-medium text-blue-700 hover:text-blue-900"
+                            className="mesa-button-secondary shrink-0"
                         >
                             Cambiar
                         </button>
@@ -64,7 +67,7 @@ export function EmployeeSelector({
         <div className="space-y-2">
             <label
                 htmlFor="employee-search"
-                className="block text-sm font-medium text-slate-700"
+                className="block text-sm font-semibold text-mesa-text"
             >
                 Empleado
             </label>
@@ -75,35 +78,35 @@ export function EmployeeSelector({
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Buscar por nombre o número de nómina..."
-                className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                className="mesa-input"
             />
 
             {search.trim().length > 0 && search.trim().length < 2 && (
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-mesa-muted">
                     Escribe al menos 2 caracteres.
                 </p>
             )}
 
             {isPending && debouncedSearch.trim().length >= 2 && (
-                <p className="text-sm text-slate-500">
+                <LoadingState compact>
                     Buscando empleados...
-                </p>
+                </LoadingState>
             )}
 
             {isFetching && !isPending && (
-                <p className="text-sm text-slate-500">
+                <LoadingState compact>
                     Actualizando resultados...
-                </p>
+                </LoadingState>
             )}
 
             {isError && (
-                <p role="alert" className="text-sm text-red-700">
+                <Alert>
                     No se pudieron buscar los empleados.
-                </p>
+                </Alert>
             )}
 
             {data && data.items.length > 0 && (
-                <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+                <div className="rounded-lg border border-mesa-border bg-white p-1">
                     {data.items.map((employee) => (
                         <button
                             key={employee.id}
@@ -112,7 +115,7 @@ export function EmployeeSelector({
                                 onSelect(employee)
                                 setSearch('')
                             }}
-                            className="block w-full border-b border-slate-100 px-4 py-3 text-left last:border-b-0 hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline-none"
+                            className="mesa-focus relative block min-h-11 w-full cursor-pointer rounded-md border-b border-mesa-border px-3 py-3 text-left wrap-anywhere last:border-b-0 hover:bg-mesa-canvas focus-visible:z-10 focus-visible:bg-mesa-selection disabled:cursor-not-allowed"
                         >
                             <p className="font-medium text-slate-900">
                                 {employee.fullName}
@@ -131,9 +134,9 @@ export function EmployeeSelector({
             )}
 
             {data && data.items.length === 0 && debouncedSearch.trim().length >= 2 && (
-                <p className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                <EmptyState>
                     No se encontraron empleados activos.
-                </p>
+                </EmptyState>
             )}
         </div>
     )

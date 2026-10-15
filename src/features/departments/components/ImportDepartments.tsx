@@ -48,7 +48,7 @@ export default function ImportDepartments() {
   }
 
   return (
-    <section aria-labelledby="import-departments-title" className="min-w-0 space-y-4 rounded-xl border border-mesa-border bg-white p-4 text-mesa-text md:p-6">
+    <section aria-labelledby="import-departments-title" className="mesa-card space-y-4 text-mesa-text">
       <div>
         <h2 id="import-departments-title" className="text-lg font-semibold">Importar departamentos</h2>
         <p className="mt-1 text-sm text-mesa-muted">Importa departamentos desde un archivo Excel.</p>

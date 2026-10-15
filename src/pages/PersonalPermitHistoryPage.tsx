@@ -4,6 +4,8 @@ import Alert from '../components/Alert'
 import Button from '../components/Button'
 import StatusBadge from '../components/StatusBadge'
 import TableContainer from '../components/TableContainer'
+import LoadingState from '../components/LoadingState'
+import EmptyState from '../components/EmptyState'
 import type { GetPersonalPermitsParams } from '../api/personalPermitsApi'
 import { usePersonalPermitHistory } from '../features/personalPermits/hooks/usePersonalPermitHistory'
 import { formatPermitDate, permitStatusLabels, permitTypeLabels } from '../features/personalPermits/personalPermit.format'
@@ -56,8 +58,8 @@ export default function PersonalPermitHistoryPage() {
 
   return (
     <section aria-labelledby="permit-history-title" className="min-w-0 space-y-6 text-mesa-text">
-      <header className="space-y-2">
-        <h1 id="permit-history-title" className="text-3xl font-semibold tracking-tight">
+      <header className="mesa-page-header">
+        <h1 id="permit-history-title" className="mesa-page-title">
           Historial de permisos
         </h1>
         <p className="text-mesa-muted">
@@ -68,7 +70,7 @@ export default function PersonalPermitHistoryPage() {
       <form
         aria-label="Filtros del historial"
         aria-describedby="history-filters-help"
-        className="min-w-0 space-y-4 rounded-xl border border-mesa-border bg-white p-4 md:p-5"
+        className="mesa-card space-y-4"
         onSubmit={(event) => {
           event.preventDefault()
           applyFilters({
@@ -162,9 +164,9 @@ export default function PersonalPermitHistoryPage() {
         </div>
 
         {isPending ? (
-          <div className="flex min-h-40 items-center justify-center rounded-xl border border-mesa-border bg-white p-6 text-mesa-muted" aria-busy="true">
+          <LoadingState>
             Preparando el listado de permisos...
-          </div>
+          </LoadingState>
         ) : isError ? (
           <Alert>
             {sessionExpired
@@ -172,13 +174,13 @@ export default function PersonalPermitHistoryPage() {
               : 'No se pudo cargar el historial de permisos. Inténtalo nuevamente.'}
           </Alert>
         ) : data.items.length === 0 ? (
-          <p role="status" className="rounded-xl border border-mesa-border bg-white p-6 text-mesa-muted">
+          <EmptyState>
             {isPlaceholderData
               ? 'Actualizando resultados...'
               : appliedFilters.status !== undefined || appliedFilters.fromDate || appliedFilters.toDate
                 ? 'No encontramos permisos con los filtros aplicados.'
                 : 'No hay permisos para mostrar.'}
-          </p>
+          </EmptyState>
         ) : (
           <>
             <ul aria-label="Historial de permisos" aria-busy={isFetching} className="min-w-0 space-y-3 md:hidden">
@@ -260,7 +262,7 @@ export default function PersonalPermitHistoryPage() {
           </>
         )}
 
-        <nav aria-label="Paginación del historial de permisos" className="grid grid-cols-2 items-center gap-3 md:grid-cols-[auto_1fr_auto]">
+        <nav aria-label="Paginación del historial de permisos" className="mesa-pagination grid grid-cols-2 items-center gap-3 md:grid-cols-[auto_1fr_auto]">
           <Button
             variant="secondary"
             disabled={!canGoPrevious}

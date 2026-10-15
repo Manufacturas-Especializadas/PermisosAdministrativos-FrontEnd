@@ -3,6 +3,8 @@ import Alert from '../components/Alert'
 import Button from '../components/Button'
 import StatusBadge from '../components/StatusBadge'
 import TableContainer from '../components/TableContainer'
+import LoadingState from '../components/LoadingState'
+import EmptyState from '../components/EmptyState'
 import ImportDepartments from '../features/departments/components/ImportDepartments'
 import { useRef, useState } from 'react'
 import { useCreateDepartment } from '../features/departments/hooks/useCreateDepartment'
@@ -55,8 +57,8 @@ export default function DepartmentsPage() {
 
   return (
     <section aria-labelledby="departments-title" className="min-w-0 space-y-6 text-mesa-text">
-      <header className="space-y-2">
-        <h1 id="departments-title" className="text-3xl font-semibold tracking-tight">Departamentos</h1>
+      <header className="mesa-page-header">
+        <h1 id="departments-title" className="mesa-page-title">Departamentos</h1>
         <p className="text-mesa-muted">Administra los departamentos utilizados por los empleados.</p>
       </header>
 
@@ -94,7 +96,7 @@ export default function DepartmentsPage() {
         }}
         aria-labelledby="create-department-title"
         aria-busy={createDepartment.isPending}
-        className="min-w-0 space-y-4 rounded-xl border border-mesa-border bg-white p-4 md:p-6"
+        className="mesa-card space-y-4"
       >
         <h2 id="create-department-title" className="text-lg font-semibold">Crear departamento</h2>
         <fieldset disabled={createDepartment.isPending} className="min-w-0 space-y-4">
@@ -136,7 +138,7 @@ export default function DepartmentsPage() {
             {!departments.isPending && departments.isFetching ? 'Actualizando departamentos...' : ''}
           </p>
         </div>
-        {departments.isPending && <p role="status" className="rounded-xl border border-mesa-border bg-white p-6 text-mesa-muted">Cargando departamentos...</p>}
+        {departments.isPending && <LoadingState>Cargando departamentos...</LoadingState>}
         {departments.isError && (
           <Alert>
             <p>{sessionExpired ? 'Tu sesión ha expirado. Vuelve a iniciar sesión.' : 'No se pudieron cargar los departamentos. Inténtalo nuevamente.'}</p>
@@ -144,7 +146,7 @@ export default function DepartmentsPage() {
           </Alert>
         )}
         {!departments.isPending && !sessionExpired && departments.data && (departments.data.length === 0 ? (
-          <p role="status" className="rounded-xl border border-mesa-border bg-white p-6 text-mesa-muted">No hay departamentos registrados.</p>
+          <EmptyState>No hay departamentos registrados.</EmptyState>
         ) : (
           <>
             <ul aria-label="Listado de departamentos" aria-busy={departments.isFetching} className="min-w-0 space-y-3 md:hidden">

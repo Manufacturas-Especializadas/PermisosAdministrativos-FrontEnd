@@ -1,6 +1,8 @@
 import { isAxiosError } from 'axios'
 import Alert from '../components/Alert'
 import Button from '../components/Button'
+import ConfirmationDialog from '../components/ConfirmationDialog'
+import { useToast } from '../components/useToast'
 import TableContainer from '../components/TableContainer'
 import { useEffect, useRef, useState } from 'react'
 import { useApprovePersonalPermit } from '../features/personalPermits/hooks/useApprovePersonalPermit'
@@ -14,44 +16,30 @@ export default function PendingPermitsPage() {
   const { data, isPending, isFetching, isError, error } = usePendingPersonalPermits()
   const approvePermit = useApprovePersonalPermit()
   const rejectPermit = useRejectPersonalPermit()
+  const notify = useToast()
+  const [approval, setApproval] = useState<PendingPersonalPermit | null>(null)
   const [selectedPermit, setSelectedPermit] = useState<PendingPersonalPermit | null>(null)
   const [rejectionReason, setRejectionReason] = useState('')
   const [processing, setProcessing] = useState<Partial<Record<number, 'approve' | 'reject'>>>({})
   const [reviewErrors, setReviewErrors] = useState<Partial<Record<number, string>>>({})
   // Una mutation puede tener varias peticiones simultáneas; el bloqueo es por permiso.
   const processingIds = useRef(new Set<number>())
-  const dialogRef = useRef<HTMLDialogElement>(null)
   const reasonRef = useRef<HTMLTextAreaElement>(null)
   const titleRef = useRef<HTMLHeadingElement>(null)
   const focusedPermitId = useRef<number | null>(null)
   const sessionExpired = isAxiosError(error) && error.response?.status === 401
-  const isRejecting = selectedPermit !== null && processing[selectedPermit.id] === 'reject'
 
   // Recupera el foco solo si el registro enfocado desaparece; no interrumpe al usuario ni al dialogo.
   useEffect(() => {
     if (
       data && focusedPermitId.current !== null &&
       !data.some((permit) => permit.id === focusedPermitId.current) &&
-      !dialogRef.current?.open && document.activeElement === document.body
+      !document.querySelector('dialog[open]') && document.activeElement === document.body
     ) {
       titleRef.current?.focus()
       focusedPermitId.current = null
     }
   }, [data])
-
-  useEffect(() => {
-    const dialog = dialogRef.current
-    const title = titleRef.current
-    if (!selectedPermit || !dialog) return
-
-    dialog.showModal()
-    reasonRef.current?.focus()
-
-    return () => {
-      dialog.close()
-      if (document.activeElement === document.body) title?.focus()
-    }
-  }, [selectedPermit])
 
   function clearReviewError(permitId: number) {
     setReviewErrors((current) => {
@@ -69,9 +57,9 @@ export default function PendingPermitsPage() {
   }
 
   async function reviewPermit(permit: PendingPersonalPermit, action: 'approve' | 'reject') {
-    if (processingIds.current.has(permit.id)) return
+    if (processingIds.current.has(permit.id)) return false
     const reason = rejectionReason.trim()
-    if (action === 'reject' && (!reason || rejectionReason.length > 500)) return
+    if (action === 'reject' && (!reason || rejectionReason.length > 500)) return false
 
     processingIds.current.add(permit.id)
     setProcessing((current) => ({ ...current, [permit.id]: action }))
@@ -82,16 +70,16 @@ export default function PendingPermitsPage() {
         await approvePermit.mutateAsync(permit.id)
       } else {
         await rejectPermit.mutateAsync({ permitId: permit.id, request: { reason } })
-        setSelectedPermit(null)
-        setRejectionReason('')
-        rejectPermit.reset()
       }
+      notify(action === 'approve' ? 'Permiso aprobado correctamente.' : 'Permiso rechazado correctamente.')
+      return true
     } catch (reviewError) {
       const message = getPersonalPermitReviewError(reviewError, action)
       setReviewErrors((current) => ({
         ...current,
         [permit.id]: `${permit.employeeName} (nómina ${permit.payrollNumber}): ${message}`,
       }))
+      return false
     } finally {
       processingIds.current.delete(permit.id)
       setProcessing((current) => {
@@ -110,7 +98,7 @@ export default function PendingPermitsPage() {
           disabled={!!processing[permit.id]}
           loading={processing[permit.id] === 'approve'}
           loadingText="Aprobando..."
-          onClick={() => void reviewPermit(permit, 'approve')}
+          onClick={() => setApproval(permit)}
         >
           <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m5 12 4 4L19 6" /></svg>
           Aprobar
@@ -142,9 +130,9 @@ export default function PendingPermitsPage() {
         focusedPermitId.current = record ? Number(record.dataset.permitId) : null
       }}
     >
-      <div className="space-y-2">
+      <div className="mesa-page-header">
         <p className="text-sm font-semibold text-mesa-primary">Revisión de Recursos Humanos</p>
-        <h1 id="pending-permits-title" ref={titleRef} tabIndex={-1} className="mesa-focus text-2xl font-semibold tracking-tight md:text-3xl">
+        <h1 id="pending-permits-title" ref={titleRef} tabIndex={-1} className="mesa-focus mesa-page-title">
           Permisos pendientes
         </h1>
         <p className="max-w-3xl text-base leading-relaxed text-mesa-muted">
@@ -190,7 +178,7 @@ export default function PendingPermitsPage() {
           </div>
         </div>
       ) : !data || sessionExpired ? null : data.length === 0 ? (
-        <div role="status" className="space-y-2 rounded-xl border border-mesa-border bg-white p-6 md:p-8">
+        <div role="status" className="mesa-empty-state space-y-2">
           <h2 className="text-lg font-semibold">{isError ? 'Sin solicitudes en la última consulta correcta' : 'No hay permisos pendientes de revisión.'}</h2>
           <p className="text-sm leading-relaxed text-mesa-muted">
             {isError ? 'No se ha podido comprobar si hay nuevas solicitudes.' : 'Las solicitudes pendientes se mostrarán aquí para que RH pueda revisarlas.'}
@@ -260,32 +248,30 @@ export default function PendingPermitsPage() {
         </>
       )}
 
-      <dialog
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="reject-permit-title"
-        aria-describedby="reject-permit-description"
-        onCancel={(event) => {
-          event.preventDefault()
-          closeRejectionDialog()
-        }}
-        className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg overflow-y-auto overscroll-contain rounded-2xl border border-mesa-border bg-white p-4 text-mesa-text shadow-xl backdrop:bg-slate-950/50 sm:p-6"
-      >
-        {selectedPermit && (
-          <form
-            className="space-y-5"
-            aria-busy={isRejecting}
-            onSubmit={(event) => {
-              event.preventDefault()
-              void reviewPermit(selectedPermit, 'reject')
-            }}
-          >
-            <h2 id="reject-permit-title" className="text-xl font-semibold text-mesa-error">Rechazar permiso</h2>
-            <p id="reject-permit-description" className="rounded-lg border border-mesa-border bg-mesa-canvas p-3 text-base leading-relaxed wrap-anywhere text-mesa-text">
-              Permiso de <strong>{selectedPermit.employeeName}</strong>, nómina {selectedPermit.payrollNumber},
-              {' '}del {formatPermitDate(selectedPermit.permitDate)} a las {selectedPermit.exitTime.slice(0, 5)}.
-            </p>
+      {approval && (
+        <ConfirmationDialog
+          title="¿Aprobar permiso?"
+          description={<>Estás a punto de aprobar el permiso de <strong>{approval.employeeName}</strong>, nómina {approval.payrollNumber}, del {formatPermitDate(approval.permitDate)} a las {approval.exitTime.slice(0, 5)}.</>}
+          confirmText="Aprobar"
+          loadingText="Aprobando..."
+          onCancel={() => setApproval(null)}
+          onConfirm={() => reviewPermit(approval, 'approve')}
+        >
+          {reviewErrors[approval.id] && <Alert>{reviewErrors[approval.id]}</Alert>}
+        </ConfirmationDialog>
+      )}
+      {selectedPermit && (
+        <ConfirmationDialog
+          title="¿Rechazar permiso?"
+          description={<>Estás a punto de rechazar el permiso de <strong>{selectedPermit.employeeName}</strong>, nómina {selectedPermit.payrollNumber}, del {formatPermitDate(selectedPermit.permitDate)} a las {selectedPermit.exitTime.slice(0, 5)}.</>}
+          confirmText="Rechazar"
+          loadingText="Rechazando..."
+          danger
+          confirmDisabled={!rejectionReason.trim() || rejectionReason.length > 500}
+          initialFocusRef={reasonRef}
+          onCancel={closeRejectionDialog}
+          onConfirm={() => reviewPermit(selectedPermit, 'reject')}
+        >
             <div className="space-y-2">
               <label htmlFor="rejection-reason" className="block text-sm font-semibold text-mesa-text">
                 Motivo del rechazo (obligatorio)
@@ -297,7 +283,6 @@ export default function PendingPermitsPage() {
                 maxLength={500}
                 rows={4}
                 value={rejectionReason}
-                disabled={isRejecting}
                 aria-describedby="rejection-reason-count"
                 onChange={(event) => setRejectionReason(event.target.value)}
                 className="mesa-input min-h-36 resize-y"
@@ -309,26 +294,8 @@ export default function PendingPermitsPage() {
             {reviewErrors[selectedPermit.id] && (
               <Alert>{reviewErrors[selectedPermit.id]}</Alert>
             )}
-            <div className="flex flex-col gap-3 border-t border-mesa-border pt-4 sm:flex-row sm:justify-end">
-              <Button
-                variant="secondary"
-                type="button"
-                disabled={isRejecting}
-                onClick={closeRejectionDialog}
-              >
-                Cancelar
-              </Button>
-              <Button
-                variant="danger"
-                type="submit"
-                disabled={isRejecting || !rejectionReason.trim() || rejectionReason.length > 500}
-              >
-                {isRejecting ? 'Rechazando...' : 'Rechazar permiso'}
-              </Button>
-            </div>
-          </form>
-        )}
-      </dialog>
+        </ConfirmationDialog>
+      )}
     </section>
   )
 }

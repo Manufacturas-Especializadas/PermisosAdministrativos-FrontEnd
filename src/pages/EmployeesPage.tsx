@@ -2,9 +2,12 @@ import { isAxiosError } from 'axios'
 import { useRef, useState } from 'react'
 import Alert from '../components/Alert'
 import Button from '../components/Button'
+import ConfirmationDialog from '../components/ConfirmationDialog'
+import { useToast } from '../components/useToast'
 import ImportResult from '../components/ImportResult'
 import StatusBadge from '../components/StatusBadge'
 import TableContainer from '../components/TableContainer'
+import LoadingState from '../components/LoadingState'
 import { useEmployees } from '../features/employees/hooks/useEmployees'
 import { useDebouncedValue } from '../features/employees/hooks/useDebouncedValue'
 import { useImportEmployees } from '../features/employees/hooks/useImportEmployees'
@@ -28,8 +31,10 @@ export default function EmployeesPage() {
   const [fileError, setFileError] = useState('')
   const fileInput = useRef<HTMLInputElement>(null)
   const importing = useRef(false)
+  const [importFile, setImportFile] = useState<File | null>(null)
+  const notify = useToast()
 
-  async function handleImport() {
+  function requestImport() {
     if (importing.current) return
     importEmployees.reset()
     const message = !file
@@ -41,14 +46,21 @@ export default function EmployeesPage() {
           : ''
     setFileError(message)
     if (message || !file) return
+    setImportFile(file)
+  }
 
+  async function handleImport() {
+    if (importing.current || !importFile) return false
     importing.current = true
     try {
-      await importEmployees.mutateAsync(file)
+      await importEmployees.mutateAsync(importFile)
       setFile(null)
       if (fileInput.current) fileInput.current.value = ''
+      notify('Importación de empleados completada. Revisa el resumen de resultados.')
+      return true
     } catch {
       // Conserva el archivo para reintentar; la mutation expone el error HTTP.
+      return false
     } finally {
       importing.current = false
     }
@@ -99,12 +111,12 @@ export default function EmployeesPage() {
 
   return (
     <section aria-labelledby="employees-title" className="min-w-0 space-y-6 text-mesa-text">
-      <header className="space-y-2">
-        <h1 id="employees-title" className="text-3xl font-semibold tracking-tight">Empleados</h1>
+      <header className="mesa-page-header">
+        <h1 id="employees-title" className="mesa-page-title">Empleados</h1>
         <p className="text-mesa-muted">Consulta empleados por nombre o número de nómina.</p>
       </header>
 
-      <section aria-label="Búsqueda y estado de empleados" className="min-w-0 rounded-xl border border-mesa-border bg-white p-4 md:p-5">
+      <section aria-label="Búsqueda y estado de empleados" className="mesa-card">
         <div className="grid min-w-0 gap-4 md:grid-cols-[minmax(0,1fr)_minmax(9rem,12rem)_auto] md:items-end">
           <div className="min-w-0 space-y-2">
             <label htmlFor="employee-search" className="block text-sm font-semibold">Buscar empleado</label>
@@ -168,12 +180,12 @@ export default function EmployeesPage() {
           </svg>
           Importar empleados
         </Button>
-        <section id="employee-import-panel" hidden={!importOpen} aria-labelledby="import-employees-title" className="min-w-0 space-y-4 rounded-xl border border-mesa-border bg-white p-4 md:p-5">
+        <section id="employee-import-panel" hidden={!importOpen} aria-labelledby="import-employees-title" className="mesa-card space-y-4">
           <div>
             <h2 id="import-employees-title" className="text-lg font-semibold">Importación desde Excel</h2>
             <p className="mt-1 text-sm text-mesa-muted">Importa empleados desde un archivo Excel.</p>
           </div>
-          <form onSubmit={(event) => { event.preventDefault(); void handleImport() }} aria-busy={importEmployees.isPending}>
+          <form onSubmit={(event) => { event.preventDefault(); requestImport() }} aria-busy={importEmployees.isPending}>
             <fieldset disabled={importEmployees.isPending} className="min-w-0 space-y-4">
               <legend className="sr-only">Archivo de empleados</legend>
               <div className="min-w-0 space-y-2">
@@ -227,9 +239,9 @@ export default function EmployeesPage() {
         </div>
 
         {isPending ? (
-          <div className="flex min-h-40 items-center justify-center rounded-xl border border-mesa-border bg-white p-6 text-mesa-muted" aria-busy="true">
+          <LoadingState>
             Preparando el listado de empleados...
-          </div>
+          </LoadingState>
         ) : isError ? (
           <Alert>
             {sessionExpired
@@ -237,7 +249,7 @@ export default function EmployeesPage() {
               : 'No se pudieron cargar los empleados. Inténtalo de nuevo más tarde.'}
           </Alert>
         ) : data.items.length === 0 ? (
-          <div role="status" className="space-y-2 rounded-xl border border-mesa-border bg-white p-6">
+          <div role="status" className="mesa-empty-state space-y-2">
             <p className="font-semibold">
               {debouncedSearch.trim()
                 ? statusFilter !== 'all'
@@ -305,7 +317,7 @@ export default function EmployeesPage() {
           </>
         )}
 
-        <nav aria-label="Paginación de empleados" className="grid grid-cols-2 items-center gap-3 md:grid-cols-[auto_1fr_auto]">
+        <nav aria-label="Paginación de empleados" className="mesa-pagination grid grid-cols-2 items-center gap-3 md:grid-cols-[auto_1fr_auto]">
           <Button
             variant="secondary"
             disabled={!canGoPrevious}
@@ -335,6 +347,18 @@ export default function EmployeesPage() {
           </Button>
         </nav>
       </section>
+      {importFile && (
+        <ConfirmationDialog
+          title="¿Importar empleados?"
+          description={<>Se procesará el archivo <strong>{importFile.name}</strong> para importar empleados. Revisa que sea el archivo correcto antes de continuar.</>}
+          confirmText="Importar empleados"
+          loadingText="Importando..."
+          onCancel={() => setImportFile(null)}
+          onConfirm={handleImport}
+        >
+          {importEmployees.isError && <Alert>{getImportError(importEmployees.error)}</Alert>}
+        </ConfirmationDialog>
+      )}
     </section>
   )
 }

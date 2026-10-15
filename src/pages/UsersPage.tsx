@@ -2,8 +2,12 @@ import { isAxiosError } from 'axios'
 import { useRef, useState } from 'react'
 import Alert from '../components/Alert'
 import Button from '../components/Button'
+import ConfirmationDialog from '../components/ConfirmationDialog'
+import { useToast } from '../components/useToast'
 import StatusBadge from '../components/StatusBadge'
 import TableContainer from '../components/TableContainer'
+import LoadingState from '../components/LoadingState'
+import EmptyState from '../components/EmptyState'
 import { EmployeeSelector } from '../features/employees/components/EmployeeSelector'
 import type { Employee } from '../features/employees/employees.types'
 import { useCreateUser } from '../features/users/hooks/useCreateUser'
@@ -28,6 +32,8 @@ export default function UsersPage() {
   const users = useUsers()
   const createUser = useCreateUser()
   const setUserStatus = useSetUserStatus()
+  const notify = useToast()
+  const [statusTarget, setStatusTarget] = useState<User | null>(null)
   const [userName, setUserName] = useState('')
   const [password, setPassword] = useState('')
   const [role, setRole] = useState('')
@@ -74,14 +80,17 @@ export default function UsersPage() {
   }
 
   async function toggleStatus(user: User) {
-    if (processingIds.current.has(user.id)) return
+    if (processingIds.current.has(user.id)) return false
     processingIds.current.add(user.id)
     setProcessing((current) => ({ ...current, [user.id]: true }))
     setStatusErrors((current) => ({ ...current, [user.id]: undefined }))
     try {
       await setUserStatus.mutateAsync({ userId: user.id, request: { isActive: !user.isActive } })
+      notify(user.isActive ? 'Usuario desactivado correctamente.' : 'Usuario activado correctamente.')
+      return true
     } catch {
       setStatusErrors((current) => ({ ...current, [user.id]: 'No se pudo actualizar el estado del usuario.' }))
+      return false
     } finally {
       processingIds.current.delete(user.id)
       setProcessing((current) => ({ ...current, [user.id]: false }))
@@ -96,7 +105,7 @@ export default function UsersPage() {
           disabled={!!processing[user.id]}
           loading={!!processing[user.id]}
           aria-label={`${processing[user.id] ? 'Guardando estado de' : user.isActive ? 'Desactivar' : 'Activar'} ${user.userName}`}
-          onClick={() => void toggleStatus(user)}
+          onClick={() => setStatusTarget(user)}
           className="w-full md:w-auto"
         >
           {processing[user.id] ? 'Guardando...' : user.isActive ? 'Desactivar' : 'Activar'}
@@ -108,8 +117,8 @@ export default function UsersPage() {
 
   return (
     <section aria-labelledby="users-title" className="min-w-0 space-y-6 text-mesa-text">
-      <header className="space-y-2">
-        <h1 id="users-title" className="text-3xl font-semibold tracking-tight">Usuarios</h1>
+      <header className="mesa-page-header">
+        <h1 id="users-title" className="mesa-page-title">Usuarios</h1>
         <p className="text-mesa-muted">Administra los usuarios que tienen acceso al sistema.</p>
       </header>
 
@@ -133,7 +142,7 @@ export default function UsersPage() {
           aria-labelledby="create-user-title"
           aria-describedby={validationErrors.length > 0 ? 'create-user-validation' : undefined}
           aria-busy={createUser.isPending}
-          className="min-w-0 space-y-5 rounded-xl border border-mesa-border bg-white p-4 md:p-6"
+          className="mesa-card space-y-5"
         >
           <h2 id="create-user-title" className="text-lg font-semibold">Crear usuario</h2>
           <fieldset disabled={createUser.isPending} className="min-w-0 space-y-6">
@@ -167,7 +176,7 @@ export default function UsersPage() {
                 </select>
               </div>
               {associateEmployee && (
-                <div className="min-w-0 wrap-anywhere [&_input]:min-w-0 [&_input]:min-h-12 [&_input]:text-base [&_button]:min-h-12 [&_button]:focus-visible:outline-2 [&_button]:focus-visible:outline-offset-2 [&_button]:focus-visible:outline-mesa-primary">
+                <div className="min-w-0 wrap-anywhere">
                   <EmployeeSelector selectedEmployee={selectedEmployee} onSelect={setSelectedEmployee} onClear={() => setSelectedEmployee(null)} />
                 </div>
               )}
@@ -206,7 +215,7 @@ export default function UsersPage() {
             {!users.isPending && users.isFetching ? 'Actualizando usuarios...' : ''}
           </p>
         </div>
-        {users.isPending && <p role="status" className="rounded-xl border border-mesa-border bg-white p-6 text-mesa-muted">Cargando usuarios...</p>}
+        {users.isPending && <LoadingState>Cargando usuarios...</LoadingState>}
         {users.isError && (
           <Alert>
             <p>{sessionExpired ? 'Tu sesión ha expirado. Vuelve a iniciar sesión.' : 'No se pudieron cargar los usuarios. Inténtalo nuevamente.'}</p>
@@ -214,7 +223,7 @@ export default function UsersPage() {
           </Alert>
         )}
         {!users.isPending && !sessionExpired && users.data && (users.data.length === 0 ? (
-          <p role="status" className="rounded-xl border border-mesa-border bg-white p-6 text-mesa-muted">No hay usuarios registrados.</p>
+          <EmptyState>No hay usuarios registrados.</EmptyState>
         ) : (
           <>
             <ul aria-label="Listado de usuarios" aria-busy={users.isFetching} className="min-w-0 space-y-3 md:hidden">
@@ -275,6 +284,19 @@ export default function UsersPage() {
           </>
         ))}
       </section>
+      {statusTarget && (
+        <ConfirmationDialog
+          title={statusTarget.isActive ? '¿Desactivar usuario?' : '¿Activar usuario?'}
+          description={<>Estás a punto de {statusTarget.isActive ? 'desactivar' : 'activar'} al usuario <strong>{statusTarget.userName}</strong>{statusTarget.employeeName ? ` (${statusTarget.employeeName})` : ''}. {statusTarget.isActive ? 'Se deshabilitará su acceso al sistema.' : 'Se habilitará su acceso al sistema.'}</>}
+          confirmText={statusTarget.isActive ? 'Desactivar' : 'Activar'}
+          loadingText="Guardando..."
+          danger={statusTarget.isActive}
+          onCancel={() => setStatusTarget(null)}
+          onConfirm={() => toggleStatus(statusTarget)}
+        >
+          {statusErrors[statusTarget.id] && <Alert>{statusErrors[statusTarget.id]}</Alert>}
+        </ConfirmationDialog>
+      )}
     </section>
   )
 }

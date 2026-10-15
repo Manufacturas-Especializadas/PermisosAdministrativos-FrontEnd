@@ -2,6 +2,8 @@ import { useState, type FormEvent } from 'react'
 import { Navigate, useNavigate } from 'react-router'
 import { useAuth } from '../auth/AuthContext'
 import BrandLogo from '../components/BrandLogo'
+import Alert from '../components/Alert'
+import LoadingState from '../components/LoadingState'
 
 export default function LoginPage() {
   const { login, isLoading, isAuthenticated } = useAuth()
@@ -43,7 +45,7 @@ export default function LoginPage() {
   if (isLoading) {
     return (
       <main className="grid min-h-dvh place-items-center bg-mesa-canvas px-4 text-mesa-muted">
-        <p role="status">Cargando...</p>
+        <LoadingState compact>Cargando...</LoadingState>
       </main>
     )
   }
@@ -55,12 +57,12 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-dvh flex-col bg-mesa-canvas px-4 py-4 text-mesa-text sm:px-6 sm:py-6">
       <section
-        className="m-auto w-full max-w-md rounded-2xl border border-mesa-border bg-white p-5 shadow-sm sm:p-8 xl:p-10"
+        className="m-auto w-full max-w-md rounded-xl border border-mesa-border border-t-4 border-t-mesa-primary bg-white p-5 sm:p-8 xl:p-10"
         aria-labelledby="login-title"
       >
-        <div className="mb-6 space-y-3">
+        <div className="mb-6 space-y-3 border-b border-mesa-border pb-6">
           <BrandLogo size="login" />
-          <h1 id="login-title" className="text-2xl font-semibold tracking-tight text-mesa-text">
+          <h1 id="login-title" className="text-2xl leading-tight font-semibold tracking-tight text-mesa-text">
             Permisos Administrativos
           </h1>
           <p className="text-sm leading-6 text-mesa-muted">
@@ -104,9 +106,9 @@ export default function LoginPage() {
           </div>
 
           {error && (
-            <p id="login-error" className="mesa-alert-error" role="alert">
+            <Alert id="login-error">
               {error}
-            </p>
+            </Alert>
           )}
           <button
             className="mesa-button-primary w-full"
@@ -115,7 +117,7 @@ export default function LoginPage() {
           >
             {isSubmitting ? 'Iniciando sesión...' : 'Iniciar sesión'}
           </button>
-          {isSubmitting && <p className="text-center text-sm text-mesa-muted" role="status">Cargando...</p>}
+          {isSubmitting && <LoadingState compact>Cargando...</LoadingState>}
         </form>
       </section>
     </main>

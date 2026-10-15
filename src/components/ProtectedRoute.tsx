@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router'
 import { useAuth } from '../auth/AuthContext'
+import LoadingState from './LoadingState'
 
 interface ProtectedRouteProps {
   children: ReactNode
@@ -16,8 +17,8 @@ export default function ProtectedRoute({
 
   if (isLoading) {
     return (
-      <main className="grid min-h-dvh place-items-center bg-slate-50 px-4 text-slate-600">
-        <p role="status">Cargando...</p>
+      <main className="grid min-h-dvh place-items-center bg-mesa-canvas px-4 text-mesa-muted">
+        <LoadingState compact>Cargando...</LoadingState>
       </main>
     )
   }

@@ -129,15 +129,15 @@ export default function ChangePasswordPage() {
     return (
         <main className="flex min-h-dvh flex-col bg-mesa-canvas px-4 py-4 text-mesa-text sm:px-6 sm:py-6">
             <section
-                className="m-auto w-full max-w-md rounded-2xl border border-mesa-border bg-white p-5 shadow-sm sm:p-8"
+                className="m-auto w-full max-w-md rounded-xl border border-mesa-border border-t-4 border-t-mesa-primary bg-white p-5 sm:p-8"
                 aria-labelledby="change-password-title"
             >
-                <div className="mb-6 space-y-3">
+                <div className="mb-6 space-y-3 border-b border-mesa-border pb-6">
                     <BrandLogo size="login" />
 
                     <h1
                         id="change-password-title"
-                        className="text-2xl font-semibold tracking-tight"
+                        className="text-2xl leading-tight font-semibold tracking-tight text-mesa-text"
                     >
                         Cambiar contraseña
                     </h1>
@@ -260,7 +260,7 @@ export default function ChangePasswordPage() {
                         type="button"
                         onClick={() => void handleLogout()}
                         disabled={isSubmitting}
-                        className="w-full text-sm font-medium text-mesa-muted underline-offset-4 hover:underline"
+                        className="mesa-focus min-h-11 w-full rounded-lg text-sm font-medium text-mesa-muted underline-offset-4 hover:bg-mesa-canvas hover:underline disabled:cursor-not-allowed"
                     >
                         Cerrar sesión
                     </button>
