@@ -51,3 +51,28 @@ export interface PersonalPermitHistoryResult {
     totalCount: number
     totalPages: number
 }
+
+
+export interface MyPersonalPermit {
+    id: number
+    employeeId: number
+    payrollNumber: string
+    employeeName: string
+    permitDate: string
+    exitTime: string
+    permitType: PersonalPermitType
+    reason: string
+    status: PersonalPermitStatus
+    rejectionReason: string | null
+    humanResourcesReviewedAt: string | null
+    actualExitAt: string | null
+    createdAt: string
+}
+
+export interface MyPersonalPermitsResult {
+    items: MyPersonalPermit[]
+    page: number
+    pageSize: number
+    totalCount: number
+    totalPages: number
+}

@@ -13,6 +13,7 @@ import PersonalPermitHistoryPage from './pages/PersonalPermitHistoryPage'
 import PersonalPermitPage from './pages/PersonalPermitPage'
 import UsersPage from './pages/UsersPage'
 import ChangePasswordPage from './pages/ChangePasswordPage'
+import MyPersonalPermitsPage from './pages/MyPersonalPermitsPage'
 
 function App() {
   return (
@@ -49,6 +50,8 @@ function App() {
                     <EmployeesPage />
                   ) : feature.path === '/permits/create' ? (
                     <PersonalPermitPage />
+                  ) : feature.path === '/permits/my' ? (
+                    <MyPersonalPermitsPage />
                   ) : feature.path === '/permits/pending' ? (
                     <PendingPermitsPage />
                   ) : feature.path === '/permits/approved' ? (

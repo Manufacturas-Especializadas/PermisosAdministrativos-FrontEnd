@@ -1,6 +1,7 @@
 import api from './http'
 import type {
     ApprovedPersonalPermit,
+    MyPersonalPermitsResult,
     PersonalPermitHistoryResult,
     PersonalPermitStatus,
     PersonalPermitType,
@@ -87,6 +88,25 @@ export async function getPersonalPermits(
         '/api/personal-permits',
         {
             params,
+            signal,
+        },
+    )
+
+    return response.data
+}
+
+export async function getMyPersonalPermits(
+    page = 1,
+    pageSize = 25,
+    signal?: AbortSignal,
+): Promise<MyPersonalPermitsResult> {
+    const response = await api.get<MyPersonalPermitsResult>(
+        '/api/personal-permits/my',
+        {
+            params: {
+                page,
+                pageSize,
+            },
             signal,
         },
     )

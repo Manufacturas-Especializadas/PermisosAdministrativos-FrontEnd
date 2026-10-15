@@ -12,6 +12,11 @@ export const protectedFeatures: ProtectedFeature[] = [
     allowedRoles: ['Supervisor', 'Administrator'],
   },
   {
+    path: '/permits/my',
+    label: 'Mis permisos',
+    allowedRoles: ['Supervisor', 'Administrator'],
+  },
+  {
     path: '/permits/pending',
     label: 'Permisos pendientes',
     allowedRoles: ['HumanResources', 'Administrator'],
