@@ -2,6 +2,8 @@ import { isAxiosError } from 'axios'
 import { useRef, useState } from 'react'
 import Alert from '../components/Alert'
 import Button from '../components/Button'
+import ConfirmationDialog from '../components/ConfirmationDialog'
+import { useToast } from '../components/useToast'
 import StatusBadge from '../components/StatusBadge'
 import TableContainer from '../components/TableContainer'
 import LoadingState from '../components/LoadingState'
@@ -30,6 +32,8 @@ export default function UsersPage() {
   const users = useUsers()
   const createUser = useCreateUser()
   const setUserStatus = useSetUserStatus()
+  const notify = useToast()
+  const [statusTarget, setStatusTarget] = useState<User | null>(null)
   const [userName, setUserName] = useState('')
   const [password, setPassword] = useState('')
   const [role, setRole] = useState('')
@@ -76,14 +80,17 @@ export default function UsersPage() {
   }
 
   async function toggleStatus(user: User) {
-    if (processingIds.current.has(user.id)) return
+    if (processingIds.current.has(user.id)) return false
     processingIds.current.add(user.id)
     setProcessing((current) => ({ ...current, [user.id]: true }))
     setStatusErrors((current) => ({ ...current, [user.id]: undefined }))
     try {
       await setUserStatus.mutateAsync({ userId: user.id, request: { isActive: !user.isActive } })
+      notify(user.isActive ? 'Usuario desactivado correctamente.' : 'Usuario activado correctamente.')
+      return true
     } catch {
       setStatusErrors((current) => ({ ...current, [user.id]: 'No se pudo actualizar el estado del usuario.' }))
+      return false
     } finally {
       processingIds.current.delete(user.id)
       setProcessing((current) => ({ ...current, [user.id]: false }))
@@ -98,7 +105,7 @@ export default function UsersPage() {
           disabled={!!processing[user.id]}
           loading={!!processing[user.id]}
           aria-label={`${processing[user.id] ? 'Guardando estado de' : user.isActive ? 'Desactivar' : 'Activar'} ${user.userName}`}
-          onClick={() => void toggleStatus(user)}
+          onClick={() => setStatusTarget(user)}
           className="w-full md:w-auto"
         >
           {processing[user.id] ? 'Guardando...' : user.isActive ? 'Desactivar' : 'Activar'}
@@ -277,6 +284,19 @@ export default function UsersPage() {
           </>
         ))}
       </section>
+      {statusTarget && (
+        <ConfirmationDialog
+          title={statusTarget.isActive ? '¿Desactivar usuario?' : '¿Activar usuario?'}
+          description={<>Estás a punto de {statusTarget.isActive ? 'desactivar' : 'activar'} al usuario <strong>{statusTarget.userName}</strong>{statusTarget.employeeName ? ` (${statusTarget.employeeName})` : ''}. {statusTarget.isActive ? 'Se deshabilitará su acceso al sistema.' : 'Se habilitará su acceso al sistema.'}</>}
+          confirmText={statusTarget.isActive ? 'Desactivar' : 'Activar'}
+          loadingText="Guardando..."
+          danger={statusTarget.isActive}
+          onCancel={() => setStatusTarget(null)}
+          onConfirm={() => toggleStatus(statusTarget)}
+        >
+          {statusErrors[statusTarget.id] && <Alert>{statusErrors[statusTarget.id]}</Alert>}
+        </ConfirmationDialog>
+      )}
     </section>
   )
 }

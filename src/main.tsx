@@ -5,12 +5,13 @@ import './index.css'
 import App from './App.tsx'
 import { AuthProvider } from './auth/AuthContext'
 import { queryClient } from './api/queryClient'
+import ToastProvider from './components/ToastProvider'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <App />
+        <ToastProvider><App /></ToastProvider>
       </AuthProvider>
     </QueryClientProvider>
   </StrictMode>,

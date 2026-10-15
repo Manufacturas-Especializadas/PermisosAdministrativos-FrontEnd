@@ -2,6 +2,8 @@ import { isAxiosError } from 'axios'
 import { useRef, useState } from 'react'
 import Alert from '../../../components/Alert'
 import Button from '../../../components/Button'
+import ConfirmationDialog from '../../../components/ConfirmationDialog'
+import { useToast } from '../../../components/useToast'
 import ImportResult from '../../../components/ImportResult'
 import { useImportUsers } from '../hooks/useImportUsers'
 
@@ -45,6 +47,8 @@ export default function ImportUsers() {
   const importUsers = useImportUsers()
   const fileInput = useRef<HTMLInputElement>(null)
   const importing = useRef(false)
+  const [importFile, setImportFile] = useState<File | null>(null)
+  const notify = useToast()
 
   function closePanel() {
     if (importing.current) return
@@ -56,7 +60,7 @@ export default function ImportUsers() {
     document.getElementById('user-import-action')?.focus()
   }
 
-  async function handleImport() {
+  function requestImport() {
     if (importing.current) return
     importUsers.reset()
     const message = !file
@@ -70,14 +74,21 @@ export default function ImportUsers() {
             : ''
     setFileError(message)
     if (message || !file) return
+    setImportFile(file)
+  }
 
+  async function handleImport() {
+    if (importing.current || !importFile) return false
     importing.current = true
     try {
-      await importUsers.mutateAsync(file)
+      await importUsers.mutateAsync(importFile)
       setFile(null)
       if (fileInput.current) fileInput.current.value = ''
+      notify('Importación de usuarios completada. Revisa el resumen de resultados.')
+      return true
     } catch {
       // Conserva el archivo para reintentar; la mutation expone el error HTTP.
+      return false
     } finally {
       importing.current = false
     }
@@ -110,7 +121,7 @@ export default function ImportUsers() {
           <h2 id="import-users-title" className="text-lg font-semibold">Importar usuarios</h2>
           <p className="mt-1 text-sm text-mesa-muted">Selecciona un Excel con las columnas NumeroNomina y Rol.</p>
         </div>
-        <form noValidate onSubmit={(event) => { event.preventDefault(); void handleImport() }} aria-busy={importUsers.isPending}>
+        <form noValidate onSubmit={(event) => { event.preventDefault(); requestImport() }} aria-busy={importUsers.isPending}>
           <fieldset disabled={importUsers.isPending} className="min-w-0 space-y-4">
             <legend className="sr-only">Archivo de usuarios</legend>
             <div className="min-w-0 space-y-2">
@@ -161,6 +172,24 @@ export default function ImportUsers() {
         )}
         {importUsers.isSuccess && <ImportResult {...importUsers.data} />}
       </section>
+      {importFile && (
+        <ConfirmationDialog
+          title="¿Importar usuarios?"
+          description={<>Se procesará el archivo <strong>{importFile.name}</strong> para importar usuarios. Revisa que sea el archivo correcto antes de continuar.</>}
+          confirmText="Importar usuarios"
+          loadingText="Importando..."
+          onCancel={() => setImportFile(null)}
+          onConfirm={handleImport}
+        >
+          {importUsers.isError && (
+            <Alert title="No se completó la importación">
+              <ul className="list-disc space-y-1 pl-5">
+                {getImportErrors(importUsers.error).map((message, index) => <li key={index} className="whitespace-pre-wrap wrap-anywhere">{message}</li>)}
+              </ul>
+            </Alert>
+          )}
+        </ConfirmationDialog>
+      )}
     </div>
   )
 }

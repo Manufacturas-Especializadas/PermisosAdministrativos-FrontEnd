@@ -2,6 +2,8 @@ import { isAxiosError } from 'axios'
 import { useRef, useState } from 'react'
 import Alert from '../components/Alert'
 import Button from '../components/Button'
+import ConfirmationDialog from '../components/ConfirmationDialog'
+import { useToast } from '../components/useToast'
 import ImportResult from '../components/ImportResult'
 import StatusBadge from '../components/StatusBadge'
 import TableContainer from '../components/TableContainer'
@@ -29,8 +31,10 @@ export default function EmployeesPage() {
   const [fileError, setFileError] = useState('')
   const fileInput = useRef<HTMLInputElement>(null)
   const importing = useRef(false)
+  const [importFile, setImportFile] = useState<File | null>(null)
+  const notify = useToast()
 
-  async function handleImport() {
+  function requestImport() {
     if (importing.current) return
     importEmployees.reset()
     const message = !file
@@ -42,14 +46,21 @@ export default function EmployeesPage() {
           : ''
     setFileError(message)
     if (message || !file) return
+    setImportFile(file)
+  }
 
+  async function handleImport() {
+    if (importing.current || !importFile) return false
     importing.current = true
     try {
-      await importEmployees.mutateAsync(file)
+      await importEmployees.mutateAsync(importFile)
       setFile(null)
       if (fileInput.current) fileInput.current.value = ''
+      notify('Importación de empleados completada. Revisa el resumen de resultados.')
+      return true
     } catch {
       // Conserva el archivo para reintentar; la mutation expone el error HTTP.
+      return false
     } finally {
       importing.current = false
     }
@@ -174,7 +185,7 @@ export default function EmployeesPage() {
             <h2 id="import-employees-title" className="text-lg font-semibold">Importación desde Excel</h2>
             <p className="mt-1 text-sm text-mesa-muted">Importa empleados desde un archivo Excel.</p>
           </div>
-          <form onSubmit={(event) => { event.preventDefault(); void handleImport() }} aria-busy={importEmployees.isPending}>
+          <form onSubmit={(event) => { event.preventDefault(); requestImport() }} aria-busy={importEmployees.isPending}>
             <fieldset disabled={importEmployees.isPending} className="min-w-0 space-y-4">
               <legend className="sr-only">Archivo de empleados</legend>
               <div className="min-w-0 space-y-2">
@@ -336,6 +347,18 @@ export default function EmployeesPage() {
           </Button>
         </nav>
       </section>
+      {importFile && (
+        <ConfirmationDialog
+          title="¿Importar empleados?"
+          description={<>Se procesará el archivo <strong>{importFile.name}</strong> para importar empleados. Revisa que sea el archivo correcto antes de continuar.</>}
+          confirmText="Importar empleados"
+          loadingText="Importando..."
+          onCancel={() => setImportFile(null)}
+          onConfirm={handleImport}
+        >
+          {importEmployees.isError && <Alert>{getImportError(importEmployees.error)}</Alert>}
+        </ConfirmationDialog>
+      )}
     </section>
   )
 }
