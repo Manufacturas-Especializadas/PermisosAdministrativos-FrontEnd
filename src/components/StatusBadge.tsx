@@ -15,8 +15,8 @@ export default function StatusBadge(props: StatusBadgeProps) {
   const label = props.isActive !== undefined ? (props.isActive ? 'Activo' : 'Inactivo') : props.label
 
   return (
-    <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium ${tones[tone].badge}`}>
-      <span aria-hidden="true" className={`h-2 w-2 shrink-0 rounded-full ${tones[tone].dot}`} />
+    <span className={`inline-flex max-w-full items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs leading-5 font-semibold ${tones[tone].badge}`}>
+      <span aria-hidden="true" className={`size-1.5 shrink-0 rounded-full ${tones[tone].dot}`} />
       {label}
     </span>
   )

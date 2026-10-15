@@ -62,10 +62,10 @@ export default function PersonalPermitPage() {
             aria-labelledby="personal-permit-title"
             className="mx-auto min-w-0 max-w-3xl space-y-6 text-mesa-text"
         >
-            <div>
+            <div className="mesa-page-header">
                 <h1
                     id="personal-permit-title"
-                    className="text-2xl font-semibold tracking-tight text-mesa-text sm:text-3xl"
+                    className="mesa-page-title"
                 >
                     Registrar permiso
                 </h1>
@@ -81,12 +81,11 @@ export default function PersonalPermitPage() {
                     void handleSubmit()
                 }}
                 aria-busy={createPermit.isPending}
-                className="min-w-0 rounded-xl border border-mesa-border bg-white p-4 shadow-sm sm:p-6"
+                className="mesa-card"
             >
                 <fieldset disabled={createPermit.isPending} className="min-w-0 space-y-5">
                     <legend className="sr-only">Datos del permiso personal</legend>
-                    {/* Estos ajustes visuales afectan únicamente a esta instancia del selector. */}
-                    <div className="min-w-0 w-full wrap-anywhere [&_label]:text-mesa-text [&_p]:text-mesa-muted [&_p.font-medium]:text-mesa-text [&_[role=alert]]:text-mesa-error [&_input]:min-h-12 [&_input]:min-w-0 [&_input]:max-w-full [&_input]:border-slate-400 [&_input]:text-base [&_input]:text-mesa-text [&_input]:placeholder:text-mesa-muted [&_input:focus]:border-mesa-primary [&_input:focus]:ring-0 [&_input:focus-visible]:outline-solid [&_input:focus-visible]:outline-2 [&_input:focus-visible]:outline-offset-2 [&_input:focus-visible]:outline-mesa-primary [&_button]:min-h-12 [&_button]:whitespace-normal [&_button]:focus-visible:relative [&_button]:focus-visible:outline-solid [&_button]:focus-visible:outline-2 [&_button]:focus-visible:outline-offset-2 [&_button]:focus-visible:outline-mesa-primary [&_button.shrink-0]:px-2 [&_button.shrink-0]:text-mesa-primary [&_button.shrink-0]:hover:text-mesa-hover [&_.overflow-hidden]:overflow-visible [&_.items-start]:flex-wrap sm:[&_.items-start]:flex-nowrap">
+                    <div className="min-w-0 wrap-anywhere">
                         <EmployeeSelector
                             selectedEmployee={selectedEmployee}
                             onSelect={setSelectedEmployee}

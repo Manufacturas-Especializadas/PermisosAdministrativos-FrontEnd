@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from 'react-router'
 import BrandLogo from '../components/BrandLogo'
 import AppNavigation from '../components/AppNavigation'
 import MobileNavigation from '../components/MobileNavigation'
+import Alert from '../components/Alert'
+import { Spinner } from '../components/LoadingState'
 import { useAuth } from '../auth/AuthContext'
 import { hasAllowedRole, protectedFeatures } from '../auth/roleAccess'
 
@@ -43,33 +45,35 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   const currentSection = navigationItems.find((item) => item.path === location.pathname)?.label ?? 'Permisos Administrativos'
   const userActions = (
-    <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-center">
+    <div className="flex min-w-0 flex-col gap-4 md:flex-row md:items-center">
       <div className="min-w-0 md:max-w-52">
-        <p className="text-xs font-medium text-mesa-muted">Usuario</p>
+        <p className="text-xs font-medium text-mesa-muted">Sesión de usuario</p>
         <p className="text-sm font-medium wrap-anywhere">{user?.userName}</p>
       </div>
       <button type="button" className="mesa-button-secondary shrink-0" onClick={handleLogout} disabled={isLoggingOut}>
+        {isLoggingOut && <Spinner />}
         {isLoggingOut ? 'Cerrando sesión...' : 'Cerrar sesión'}
       </button>
     </div>
   )
 
   return (
-    <div className="min-h-dvh bg-mesa-canvas text-mesa-text xl:grid xl:grid-cols-[15rem_minmax(0,1fr)]">
+    <div className="min-h-dvh bg-mesa-canvas text-mesa-text xl:grid xl:grid-cols-[16rem_minmax(0,1fr)]">
       <a href="#main-content" className="mesa-focus sr-only z-20 rounded-lg bg-mesa-primary px-4 py-3 text-white focus:not-sr-only focus:fixed focus:top-3 focus:left-3">
         Ir al contenido principal
       </a>
       <aside className="sticky top-0 hidden h-dvh min-w-0 flex-col overflow-y-auto border-r border-mesa-border bg-white px-4 py-6 xl:flex" aria-label="Navegación de escritorio">
-        <div className="mb-6 space-y-3 px-3">
+        <div className="mb-6 space-y-4 border-b border-mesa-border px-3 pb-6">
           <BrandLogo size="sidebar" />
           <p className="text-lg leading-snug font-semibold">Permisos Administrativos</p>
-          <div className="h-1 w-10 rounded-full bg-mesa-brand" aria-hidden="true" />
+          <p className="text-xs text-mesa-muted">Gestión interna de personal</p>
         </div>
         <AppNavigation items={navigationItems} />
+        <p className="mt-auto px-3 pt-8 text-xs leading-5 text-mesa-muted">Manufacturas Especializadas</p>
       </aside>
       <div className="min-w-0">
-        <header className="border-b border-mesa-border bg-white px-4 py-3 md:px-6 xl:px-8">
-          <div className="flex min-w-0 items-center justify-between gap-3">
+        <header className="border-b border-mesa-border bg-white px-4 py-4 md:px-6 xl:px-8">
+          <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
               <button
                 type="button"
@@ -83,22 +87,25 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 Menú
               </button>
               <div className="xl:hidden"><BrandLogo /></div>
-              <p className="hidden text-lg font-semibold wrap-anywhere lg:block">Permisos Administrativos</p>
+              <div className="hidden space-y-1 lg:block">
+                <p className="text-xs text-mesa-muted">Permisos Administrativos</p>
+                <p className="text-sm font-semibold wrap-anywhere" aria-label="Sección actual">{currentSection}</p>
+              </div>
             </div>
             <div className="hidden min-w-0 md:block">{userActions}</div>
             <button type="button" className="mesa-button-secondary shrink-0 md:hidden" onClick={handleLogout} disabled={isLoggingOut}>
               {isLoggingOut ? 'Cerrando...' : 'Salir'}
             </button>
           </div>
-          <p className="mt-3 text-sm font-medium wrap-anywhere text-mesa-muted" aria-label="Sección actual">{currentSection}</p>
+          <p className="mt-3 text-sm font-medium wrap-anywhere text-mesa-muted lg:hidden" aria-label="Sección actual">{currentSection}</p>
         </header>
-        <main id="main-content" tabIndex={-1} className="mesa-focus min-w-0 px-4 py-6 text-slate-900 md:px-6 md:py-8 xl:px-8">
-          {error && !menuOpen && <p className="mesa-alert-error mb-6" role="alert">{error}</p>}
+        <main id="main-content" tabIndex={-1} className="mesa-focus mx-auto min-w-0 max-w-400 px-4 py-6 text-mesa-text md:px-6 md:py-8 xl:px-8 xl:py-10">
+          {error && !menuOpen && <Alert className="mb-6">{error}</Alert>}
           {children}
         </main>
       </div>
       <MobileNavigation open={menuOpen} onClose={closeMenu} items={navigationItems}>
-        {error && menuOpen && <p className="mesa-alert-error mb-3" role="alert">{error}</p>}
+        {error && menuOpen && <Alert className="mb-3">{error}</Alert>}
         {userActions}
       </MobileNavigation>
     </div>

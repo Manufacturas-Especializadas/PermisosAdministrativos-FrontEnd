@@ -104,7 +104,7 @@ export default function ImportUsers() {
         id="import-users-panel"
         hidden={!open}
         aria-labelledby="import-users-title"
-        className="min-w-0 space-y-4 rounded-xl border border-mesa-border bg-white p-4 text-mesa-text md:p-6"
+        className="mesa-card space-y-4 text-mesa-text"
       >
         <div>
           <h2 id="import-users-title" className="text-lg font-semibold">Importar usuarios</h2>

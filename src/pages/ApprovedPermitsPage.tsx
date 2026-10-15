@@ -3,6 +3,8 @@ import { useRef, useState } from 'react'
 import Alert from '../components/Alert'
 import Button from '../components/Button'
 import TableContainer from '../components/TableContainer'
+import EmptyState from '../components/EmptyState'
+import { Spinner } from '../components/LoadingState'
 import { useApprovedPersonalPermits } from '../features/personalPermits/hooks/useApprovedPersonalPermits'
 import { useCompletePersonalPermit } from '../features/personalPermits/hooks/useCompletePersonalPermit'
 import { getPersonalPermitReviewError } from '../features/personalPermits/personalPermit.errors'
@@ -53,10 +55,10 @@ export default function ApprovedPermitsPage() {
 
   return (
     <section aria-labelledby="approved-permits-title" className="min-w-0 space-y-6">
-      <div>
+      <div className="mesa-page-header">
         <h1
           id="approved-permits-title"
-          className="text-3xl font-semibold tracking-tight text-mesa-text"
+          className="mesa-page-title"
         >
           Salidas autorizadas
         </h1>
@@ -70,14 +72,15 @@ export default function ApprovedPermitsPage() {
 
       <section aria-labelledby="approved-results-title" className="min-w-0 space-y-4">
         <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:justify-between">
-          <h2 id="approved-results-title" className="text-xl font-semibold text-mesa-text">Resultados</h2>
+          <h2 id="approved-results-title" className="text-lg font-semibold text-mesa-text">Resultados</h2>
           <div
             className={isPending
-              ? 'flex min-h-40 w-full items-center rounded-xl border border-mesa-border bg-white p-6 text-sm text-mesa-muted'
-              : 'text-sm text-mesa-muted'}
+              ? 'mesa-card flex min-h-40 w-full items-center justify-center gap-3 text-sm text-mesa-muted'
+              : 'flex items-center gap-2 text-sm text-mesa-muted'}
             role="status"
             aria-live="polite"
           >
+            {(isFetching || isPending) && <Spinner />}
             {isFetching
               ? isPending
                 ? 'Cargando salidas autorizadas...'
@@ -97,9 +100,9 @@ export default function ApprovedPermitsPage() {
         )}
 
         {isPending ? null : !data || sessionExpired ? null : data.length === 0 ? (
-          <p role="status" className="rounded-xl border border-mesa-border bg-white p-6 text-mesa-muted">
+          <EmptyState>
             No hay permisos aprobados para registrar salidas hoy.
-          </p>
+          </EmptyState>
         ) : (
           <>
             <ul className="space-y-4 md:hidden" aria-label="Listado de salidas autorizadas" aria-busy={isFetching}>

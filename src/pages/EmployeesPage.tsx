@@ -5,6 +5,7 @@ import Button from '../components/Button'
 import ImportResult from '../components/ImportResult'
 import StatusBadge from '../components/StatusBadge'
 import TableContainer from '../components/TableContainer'
+import LoadingState from '../components/LoadingState'
 import { useEmployees } from '../features/employees/hooks/useEmployees'
 import { useDebouncedValue } from '../features/employees/hooks/useDebouncedValue'
 import { useImportEmployees } from '../features/employees/hooks/useImportEmployees'
@@ -99,12 +100,12 @@ export default function EmployeesPage() {
 
   return (
     <section aria-labelledby="employees-title" className="min-w-0 space-y-6 text-mesa-text">
-      <header className="space-y-2">
-        <h1 id="employees-title" className="text-3xl font-semibold tracking-tight">Empleados</h1>
+      <header className="mesa-page-header">
+        <h1 id="employees-title" className="mesa-page-title">Empleados</h1>
         <p className="text-mesa-muted">Consulta empleados por nombre o número de nómina.</p>
       </header>
 
-      <section aria-label="Búsqueda y estado de empleados" className="min-w-0 rounded-xl border border-mesa-border bg-white p-4 md:p-5">
+      <section aria-label="Búsqueda y estado de empleados" className="mesa-card">
         <div className="grid min-w-0 gap-4 md:grid-cols-[minmax(0,1fr)_minmax(9rem,12rem)_auto] md:items-end">
           <div className="min-w-0 space-y-2">
             <label htmlFor="employee-search" className="block text-sm font-semibold">Buscar empleado</label>
@@ -168,7 +169,7 @@ export default function EmployeesPage() {
           </svg>
           Importar empleados
         </Button>
-        <section id="employee-import-panel" hidden={!importOpen} aria-labelledby="import-employees-title" className="min-w-0 space-y-4 rounded-xl border border-mesa-border bg-white p-4 md:p-5">
+        <section id="employee-import-panel" hidden={!importOpen} aria-labelledby="import-employees-title" className="mesa-card space-y-4">
           <div>
             <h2 id="import-employees-title" className="text-lg font-semibold">Importación desde Excel</h2>
             <p className="mt-1 text-sm text-mesa-muted">Importa empleados desde un archivo Excel.</p>
@@ -227,9 +228,9 @@ export default function EmployeesPage() {
         </div>
 
         {isPending ? (
-          <div className="flex min-h-40 items-center justify-center rounded-xl border border-mesa-border bg-white p-6 text-mesa-muted" aria-busy="true">
+          <LoadingState>
             Preparando el listado de empleados...
-          </div>
+          </LoadingState>
         ) : isError ? (
           <Alert>
             {sessionExpired
@@ -237,7 +238,7 @@ export default function EmployeesPage() {
               : 'No se pudieron cargar los empleados. Inténtalo de nuevo más tarde.'}
           </Alert>
         ) : data.items.length === 0 ? (
-          <div role="status" className="space-y-2 rounded-xl border border-mesa-border bg-white p-6">
+          <div role="status" className="mesa-empty-state space-y-2">
             <p className="font-semibold">
               {debouncedSearch.trim()
                 ? statusFilter !== 'all'
@@ -305,7 +306,7 @@ export default function EmployeesPage() {
           </>
         )}
 
-        <nav aria-label="Paginación de empleados" className="grid grid-cols-2 items-center gap-3 md:grid-cols-[auto_1fr_auto]">
+        <nav aria-label="Paginación de empleados" className="mesa-pagination grid grid-cols-2 items-center gap-3 md:grid-cols-[auto_1fr_auto]">
           <Button
             variant="secondary"
             disabled={!canGoPrevious}

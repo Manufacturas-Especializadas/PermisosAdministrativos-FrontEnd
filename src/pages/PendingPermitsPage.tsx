@@ -142,9 +142,9 @@ export default function PendingPermitsPage() {
         focusedPermitId.current = record ? Number(record.dataset.permitId) : null
       }}
     >
-      <div className="space-y-2">
+      <div className="mesa-page-header">
         <p className="text-sm font-semibold text-mesa-primary">Revisión de Recursos Humanos</p>
-        <h1 id="pending-permits-title" ref={titleRef} tabIndex={-1} className="mesa-focus text-2xl font-semibold tracking-tight md:text-3xl">
+        <h1 id="pending-permits-title" ref={titleRef} tabIndex={-1} className="mesa-focus mesa-page-title">
           Permisos pendientes
         </h1>
         <p className="max-w-3xl text-base leading-relaxed text-mesa-muted">
@@ -190,7 +190,7 @@ export default function PendingPermitsPage() {
           </div>
         </div>
       ) : !data || sessionExpired ? null : data.length === 0 ? (
-        <div role="status" className="space-y-2 rounded-xl border border-mesa-border bg-white p-6 md:p-8">
+        <div role="status" className="mesa-empty-state space-y-2">
           <h2 className="text-lg font-semibold">{isError ? 'Sin solicitudes en la última consulta correcta' : 'No hay permisos pendientes de revisión.'}</h2>
           <p className="text-sm leading-relaxed text-mesa-muted">
             {isError ? 'No se ha podido comprobar si hay nuevas solicitudes.' : 'Las solicitudes pendientes se mostrarán aquí para que RH pueda revisarlas.'}
@@ -270,7 +270,7 @@ export default function PendingPermitsPage() {
           event.preventDefault()
           closeRejectionDialog()
         }}
-        className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg overflow-y-auto overscroll-contain rounded-2xl border border-mesa-border bg-white p-4 text-mesa-text shadow-xl backdrop:bg-slate-950/50 sm:p-6"
+        className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg overflow-y-auto overscroll-contain rounded-xl border border-mesa-border bg-white p-5 text-mesa-text shadow-lg backdrop:bg-slate-950/40 sm:p-6"
       >
         {selectedPermit && (
           <form
@@ -281,7 +281,7 @@ export default function PendingPermitsPage() {
               void reviewPermit(selectedPermit, 'reject')
             }}
           >
-            <h2 id="reject-permit-title" className="text-xl font-semibold text-mesa-error">Rechazar permiso</h2>
+            <h2 id="reject-permit-title" className="text-xl font-semibold text-mesa-text">Rechazar permiso</h2>
             <p id="reject-permit-description" className="rounded-lg border border-mesa-border bg-mesa-canvas p-3 text-base leading-relaxed wrap-anywhere text-mesa-text">
               Permiso de <strong>{selectedPermit.employeeName}</strong>, nómina {selectedPermit.payrollNumber},
               {' '}del {formatPermitDate(selectedPermit.permitDate)} a las {selectedPermit.exitTime.slice(0, 5)}.

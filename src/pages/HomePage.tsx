@@ -4,15 +4,16 @@ export default function HomePage() {
   const { user } = useAuth()
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <section aria-labelledby="welcome-title">
-        <h1 id="welcome-title" className="text-3xl font-semibold tracking-tight text-slate-950">Bienvenido</h1>
-        <dl className="mt-5 space-y-4">
-          <div>
+        <h1 id="welcome-title" className="mesa-page-title">Bienvenido</h1>
+        <p className="mt-2 text-mesa-muted">Permisos Administrativos · Manufacturas Especializadas</p>
+        <dl className="mesa-card mt-6 grid gap-6 md:grid-cols-2">
+          <div className="min-w-0">
             <dt className="text-sm font-medium text-slate-600">Usuario</dt>
             <dd className="mt-1 wrap-anywhere text-lg font-medium">{user?.userName}</dd>
           </div>
-          <div>
+          <div className="min-w-0 border-t border-mesa-border pt-5 md:border-t-0 md:border-l md:pt-0 md:pl-6">
             <dt className="text-sm font-medium text-slate-600">Roles</dt>
             <dd className="mt-2">
               {user && user.roles.length > 0 ? (
@@ -30,7 +31,7 @@ export default function HomePage() {
           </div>
         </dl>
       </section>
-      <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8" aria-labelledby="panel-title">
+      <section className="mesa-card" aria-labelledby="panel-title">
         <h2 id="panel-title" className="text-lg font-semibold text-slate-950">Panel principal</h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">Próximamente encontrarás aquí las opciones del sistema.</p>
       </section>

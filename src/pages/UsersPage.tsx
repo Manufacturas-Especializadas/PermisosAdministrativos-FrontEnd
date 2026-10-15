@@ -4,6 +4,8 @@ import Alert from '../components/Alert'
 import Button from '../components/Button'
 import StatusBadge from '../components/StatusBadge'
 import TableContainer from '../components/TableContainer'
+import LoadingState from '../components/LoadingState'
+import EmptyState from '../components/EmptyState'
 import { EmployeeSelector } from '../features/employees/components/EmployeeSelector'
 import type { Employee } from '../features/employees/employees.types'
 import { useCreateUser } from '../features/users/hooks/useCreateUser'
@@ -108,8 +110,8 @@ export default function UsersPage() {
 
   return (
     <section aria-labelledby="users-title" className="min-w-0 space-y-6 text-mesa-text">
-      <header className="space-y-2">
-        <h1 id="users-title" className="text-3xl font-semibold tracking-tight">Usuarios</h1>
+      <header className="mesa-page-header">
+        <h1 id="users-title" className="mesa-page-title">Usuarios</h1>
         <p className="text-mesa-muted">Administra los usuarios que tienen acceso al sistema.</p>
       </header>
 
@@ -133,7 +135,7 @@ export default function UsersPage() {
           aria-labelledby="create-user-title"
           aria-describedby={validationErrors.length > 0 ? 'create-user-validation' : undefined}
           aria-busy={createUser.isPending}
-          className="min-w-0 space-y-5 rounded-xl border border-mesa-border bg-white p-4 md:p-6"
+          className="mesa-card space-y-5"
         >
           <h2 id="create-user-title" className="text-lg font-semibold">Crear usuario</h2>
           <fieldset disabled={createUser.isPending} className="min-w-0 space-y-6">
@@ -167,7 +169,7 @@ export default function UsersPage() {
                 </select>
               </div>
               {associateEmployee && (
-                <div className="min-w-0 wrap-anywhere [&_input]:min-w-0 [&_input]:min-h-12 [&_input]:text-base [&_button]:min-h-12 [&_button]:focus-visible:outline-2 [&_button]:focus-visible:outline-offset-2 [&_button]:focus-visible:outline-mesa-primary">
+                <div className="min-w-0 wrap-anywhere">
                   <EmployeeSelector selectedEmployee={selectedEmployee} onSelect={setSelectedEmployee} onClear={() => setSelectedEmployee(null)} />
                 </div>
               )}
@@ -206,7 +208,7 @@ export default function UsersPage() {
             {!users.isPending && users.isFetching ? 'Actualizando usuarios...' : ''}
           </p>
         </div>
-        {users.isPending && <p role="status" className="rounded-xl border border-mesa-border bg-white p-6 text-mesa-muted">Cargando usuarios...</p>}
+        {users.isPending && <LoadingState>Cargando usuarios...</LoadingState>}
         {users.isError && (
           <Alert>
             <p>{sessionExpired ? 'Tu sesión ha expirado. Vuelve a iniciar sesión.' : 'No se pudieron cargar los usuarios. Inténtalo nuevamente.'}</p>
@@ -214,7 +216,7 @@ export default function UsersPage() {
           </Alert>
         )}
         {!users.isPending && !sessionExpired && users.data && (users.data.length === 0 ? (
-          <p role="status" className="rounded-xl border border-mesa-border bg-white p-6 text-mesa-muted">No hay usuarios registrados.</p>
+          <EmptyState>No hay usuarios registrados.</EmptyState>
         ) : (
           <>
             <ul aria-label="Listado de usuarios" aria-busy={users.isFetching} className="min-w-0 space-y-3 md:hidden">
