@@ -113,7 +113,7 @@ export default function EmployeesPage() {
     <section aria-labelledby="employees-title" className="min-w-0 space-y-6 text-mesa-text">
       <header className="mesa-page-header">
         <h1 id="employees-title" className="mesa-page-title">Empleados</h1>
-        <p className="text-mesa-muted">Consulta empleados por nombre o número de nómina.</p>
+        <p className="text-mesa-muted">Administra los empleados de la planta</p>
       </header>
 
       <section aria-label="Búsqueda y estado de empleados" className="mesa-card">
@@ -164,7 +164,7 @@ export default function EmployeesPage() {
             </Button>
           )}
         </div>
-        <p id="employee-search-help" className="mt-3 text-sm text-mesa-muted">Escribe un nombre o número de nómina. Los resultados se actualizan mientras buscas.</p>
+        <p id="employee-search-help" className="mt-3 text-sm text-mesa-muted"></p>
       </section>
 
       <div className="min-w-0 space-y-4">
