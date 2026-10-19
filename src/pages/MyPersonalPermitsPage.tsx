@@ -103,11 +103,6 @@ export default function MyPersonalPermitsPage() {
                 >
                     Mis permisos
                 </h1>
-
-                <p className="text-mesa-muted">
-                    Consulta tus solicitudes de permiso y el estado en el que se
-                    encuentran.
-                </p>
             </header>
 
             <section

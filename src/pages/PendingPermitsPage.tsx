@@ -131,7 +131,7 @@ export default function PendingPermitsPage() {
       }}
     >
       <div className="mesa-page-header">
-        <p className="text-sm font-semibold text-mesa-primary">Revisión de Recursos Humanos</p>
+        <p className="text-sm font-semibold text-mesa-primary"></p>
         <h1 id="pending-permits-title" ref={titleRef} tabIndex={-1} className="mesa-focus mesa-page-title">
           Permisos pendientes
         </h1>
@@ -213,7 +213,7 @@ export default function PendingPermitsPage() {
           </div>
 
           <TableContainer label="Listado de permisos pendientes" busy={isFetching} className="hidden md:block">
-            <table className="w-full min-w-192 table-fixed text-left text-sm">
+            <table className="w-full min-w-3xl table-fixed text-left text-sm">
               <caption className="sr-only">Permisos pendientes: identidad del empleado, información del permiso, motivo y acciones</caption>
               <thead className="border-b border-mesa-border bg-mesa-canvas text-mesa-muted">
                 <tr>
@@ -272,28 +272,28 @@ export default function PendingPermitsPage() {
           onCancel={closeRejectionDialog}
           onConfirm={() => reviewPermit(selectedPermit, 'reject')}
         >
-            <div className="space-y-2">
-              <label htmlFor="rejection-reason" className="block text-sm font-semibold text-mesa-text">
-                Motivo del rechazo (obligatorio)
-              </label>
-              <textarea
-                id="rejection-reason"
-                ref={reasonRef}
-                required
-                maxLength={500}
-                rows={4}
-                value={rejectionReason}
-                aria-describedby="rejection-reason-count"
-                onChange={(event) => setRejectionReason(event.target.value)}
-                className="mesa-input min-h-36 resize-y"
-              />
-              <p id="rejection-reason-count" className="text-sm text-mesa-muted">
-                {rejectionReason.length}/500 caracteres
-              </p>
-            </div>
-            {reviewErrors[selectedPermit.id] && (
-              <Alert>{reviewErrors[selectedPermit.id]}</Alert>
-            )}
+          <div className="space-y-2">
+            <label htmlFor="rejection-reason" className="block text-sm font-semibold text-mesa-text">
+              Motivo del rechazo (obligatorio)
+            </label>
+            <textarea
+              id="rejection-reason"
+              ref={reasonRef}
+              required
+              maxLength={500}
+              rows={4}
+              value={rejectionReason}
+              aria-describedby="rejection-reason-count"
+              onChange={(event) => setRejectionReason(event.target.value)}
+              className="mesa-input min-h-36 resize-y"
+            />
+            <p id="rejection-reason-count" className="text-sm text-mesa-muted">
+              {rejectionReason.length}/500 caracteres
+            </p>
+          </div>
+          {reviewErrors[selectedPermit.id] && (
+            <Alert>{reviewErrors[selectedPermit.id]}</Alert>
+          )}
         </ConfirmationDialog>
       )}
     </section>
